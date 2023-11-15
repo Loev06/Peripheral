@@ -1,5 +1,3 @@
-use crate::Board;
-
 use super::{super::{precomputed, Bitboard, Square, util, PieceType::*, Color::*}, MoveGenerator};
 
 // Thanks to GunshipPenguin for these magic numbers
@@ -31,17 +29,17 @@ const BISHOP_SHIFTS: [usize; 64] = [
 const ROOK_MAGICS: [Magic; 64] = precompute_magics_array(ROOK_MAGIC_NUMBERS, ROOK_SHIFTS, precomputed::ROOK_MOVES_NO_BORDER);
 const BISHOP_MAGICS: [Magic; 64] = precompute_magics_array(BISHOP_MAGIC_NUMBERS, BISHOP_SHIFTS, precomputed::BISHOP_MOVES_NO_BORDER);
 
-impl MoveGenerator {
+impl<'a> MoveGenerator<'a> {
     pub fn precompute_lookup_tables(&mut self) {
         self.rook_lookups = precompute_lookups(precomputed::ROOK_DIRS, ROOK_MAGICS);
         self.bishop_lookups = precompute_lookups(precomputed::BISHOP_DIRS, BISHOP_MAGICS);
     }
 
-    pub fn get_rook_attacks(&self, sq: Square, b: &Board) -> Bitboard {
-        self.rook_lookups[ROOK_MAGICS[sq].calculate_index(b.bbs[Any(Neutral)])]
+    pub fn get_rook_attacks(&self, sq: Square) -> Bitboard {
+        self.rook_lookups[ROOK_MAGICS[sq as usize].calculate_index(self.b.bbs[Any(Neutral)])]
     }
-    pub fn get_bishop_attacks(&self, sq: Square, b: &Board) -> Bitboard {
-        self.bishop_lookups[BISHOP_MAGICS[sq].calculate_index(b.bbs[Any(Neutral)])]
+    pub fn get_bishop_attacks(&self, sq: Square) -> Bitboard {
+        self.bishop_lookups[BISHOP_MAGICS[sq as usize].calculate_index(self.b.bbs[Any(Neutral)])]
     }
 }
 
@@ -69,7 +67,7 @@ const fn precompute_magics_array(magic_nrs: [u64; 64], shifts: [usize; 64], mask
     let mut magics = [Magic::empty(); 64];
 
     let mut offset = 0;
-    let mut sq: Square = 0;
+    let mut sq: usize = 0;
     while sq < 64 {
         magics[sq] = Magic {
             magic_nr: magic_nrs[sq],
@@ -89,7 +87,7 @@ fn precompute_lookups(dirs: [(isize, isize); 4], magics: [Magic; 64]) -> Vec<Bit
     let table_size = magics[63].offset + (1 << (64 - magics[63].shift));
     let mut lookup = vec![precomputed::EMPTY; table_size];
 
-    let mut sq: Square = 0;
+    let mut sq: usize = 0;
     while sq < 64 {
         let mut blockers: Bitboard = precomputed::EMPTY;
         loop {
@@ -98,8 +96,8 @@ fn precompute_lookups(dirs: [(isize, isize); 4], magics: [Magic; 64]) -> Vec<Bit
             let mut attacking_squares = precomputed::EMPTY;
             let mut dir = 0;
             while dir < 4 {
-                let mut x = util::get_square_x(sq) as isize;
-                let mut y = util::get_square_y(sq) as isize;
+                let mut x = util::get_square_x(sq as Square) as isize;
+                let mut y = util::get_square_y(sq as Square) as isize;
 
                 loop {
                     x += dirs[dir].0;

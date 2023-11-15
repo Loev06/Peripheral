@@ -11,7 +11,8 @@ pub fn run_bot() -> Result<(), Box<dyn Error>> {
     println!("Main bot function");
     
     let mut moves = MoveList::new();
-    MoveGenerator::new().generate_legal_moves(&Board::try_from_fen(FEN)?, &mut moves);
+    let board = &Board::try_from_fen(FEN)?;
+    MoveGenerator::new(&board).generate_legal_moves(&mut moves);
     dbg!(moves.count);
 
     Ok(())
@@ -23,6 +24,6 @@ mod tests {
 
     #[test]
     fn it_works() {
-        run_bot();
+        run_bot().expect("run_bot returned an error.");
     }
 }

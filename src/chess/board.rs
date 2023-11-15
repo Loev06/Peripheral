@@ -4,7 +4,7 @@ use std::error::Error;
 use super::{
     Color, Color::*,
     PieceType, PieceType::*,
-    precomputed, Bitboard, Square, util,
+    precomputed, Bitboard, Square, util, CastlingFlags,
 };
 use enum_map::{self, EnumMap};
 
@@ -34,10 +34,14 @@ impl<'a> FENdata<'a> {
 pub struct Board {
     pub bbs: EnumMap<PieceType, Bitboard>,
     pub piece_list: [Option<PieceType>; 64],
+
     pub player_to_move: Color,
     pub opponent_color: Color,
+
     pub playing_king_square: Square,
     pub opponent_king_square: Square,
+
+    pub castling_rights: CastlingFlags
 }
 
 impl Board {
@@ -48,12 +52,13 @@ impl Board {
             player_to_move: Color::White,
             opponent_color: Color::Black,
             playing_king_square: 64,
-            opponent_king_square: 64
+            opponent_king_square: 64,
+            castling_rights: CastlingFlags::ALL
         };
-        b.piece_list[precomputed::E1] = Some(King(White));
-        b.piece_list[precomputed::E8] = Some(King(Black));
-        b.playing_king_square = util::ls1b_from_bitboard(b.bbs[King(b.player_to_move)]);
-        b.playing_king_square = util::ls1b_from_bitboard(b.bbs[King(b.opponent_color)]);
+        b.piece_list[precomputed::E1 as usize] = Some(King(White));
+        b.piece_list[precomputed::E8 as usize] = Some(King(Black));
+        b.playing_king_square = util::ls1b_from_bitboard(b.bbs[King(b.player_to_move)]) as Square;
+        b.playing_king_square = util::ls1b_from_bitboard(b.bbs[King(b.opponent_color)]) as Square;
         b
     }
 
@@ -64,7 +69,8 @@ impl Board {
             player_to_move: Color::White,
             opponent_color: Color::Black,
             playing_king_square: 64,
-            opponent_king_square: 64
+            opponent_king_square: 64,
+            castling_rights: CastlingFlags::empty()
         }
     }
 
@@ -103,16 +109,17 @@ impl Board {
         b.opponent_color = -b.player_to_move;
 
         // TODO: Add parsing for rest of the FEN data
+        b.castling_rights = CastlingFlags::ALL;
         
         Self::update_bitboards(&mut b.bbs);
-        b.playing_king_square = util::ls1b_from_bitboard(b.bbs[King(b.player_to_move)]);
-        b.opponent_king_square = util::ls1b_from_bitboard(b.bbs[King(b.opponent_color)]);
+        b.playing_king_square = util::ls1b_from_bitboard(b.bbs[King(b.player_to_move)]) as Square;
+        b.opponent_king_square = util::ls1b_from_bitboard(b.bbs[King(b.opponent_color)]) as Square;
 
         Ok(b)
     }
 
     fn add_piece(&mut self, pt: PieceType, sq: Square) {
-        self.piece_list[sq] = Some(pt);
+        self.piece_list[sq as usize] = Some(pt);
         self.bbs[pt] |= util::bitboard_from_square(sq);
     }
 
