@@ -41,7 +41,8 @@ pub struct Board {
     pub playing_king_square: Square,
     pub opponent_king_square: Square,
 
-    pub castling_rights: CastlingFlags
+    pub castling_rights: CastlingFlags,
+    pub en_passant_mask: Bitboard
 }
 
 impl Board {
@@ -53,7 +54,8 @@ impl Board {
             opponent_color: Color::Black,
             playing_king_square: 64,
             opponent_king_square: 64,
-            castling_rights: CastlingFlags::ALL
+            castling_rights: CastlingFlags::ALL,
+            en_passant_mask: precomputed::EMPTY
         };
         b.piece_list[precomputed::E1 as usize] = Some(King(White));
         b.piece_list[precomputed::E8 as usize] = Some(King(Black));
@@ -70,7 +72,8 @@ impl Board {
             opponent_color: Color::Black,
             playing_king_square: 64,
             opponent_king_square: 64,
-            castling_rights: CastlingFlags::empty()
+            castling_rights: CastlingFlags::empty(),
+            en_passant_mask: precomputed::EMPTY
         }
     }
 
@@ -108,8 +111,22 @@ impl Board {
         b.player_to_move = if fen_data.color == 'w' {White} else {Black};
         b.opponent_color = -b.player_to_move;
 
+        for c in fen_data.castling.chars() {
+            b.castling_rights.insert(match c {
+                'K' => CastlingFlags::WK,
+                'Q' => CastlingFlags::WQ,
+                'k' => CastlingFlags::BK,
+                'q' => CastlingFlags::BQ,
+                '-' => CastlingFlags::empty(),
+                c => return Err(format!("Not a valid castling state: {}", c).into())
+            });
+        }
+
+        if let Some(idx) = precomputed::SQUARE_NAMES.iter().position(|&s| s == fen_data.en_passant) {
+            b.en_passant_mask = util::bitboard_from_square(idx as Square);
+        }
+
         // TODO: Add parsing for rest of the FEN data
-        b.castling_rights = CastlingFlags::ALL;
         
         Self::update_bitboards(&mut b.bbs);
         b.playing_king_square = util::ls1b_from_bitboard(b.bbs[King(b.player_to_move)]) as Square;

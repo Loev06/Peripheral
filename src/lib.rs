@@ -5,7 +5,7 @@ pub use chess::{MoveGenerator, Board, MoveList};
 #[allow(dead_code)]
 mod chess;
 
-const FEN: &str = "rnbqkbnr/8/8/8/8/4K3/8/RNBQ1BNR w HAkq - 0 1";
+const FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1";
 
 pub fn run_bot() -> Result<(), Box<dyn Error>> {
     println!("Main bot function");

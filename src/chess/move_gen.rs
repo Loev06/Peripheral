@@ -67,27 +67,29 @@ impl<'a> MoveGenerator<'a> {
         let b = self.b;
         if b.player_to_move == White {
             if b.castling_rights.contains(CastlingFlags::WK) &&
-               legal_king_moves & precomputed::F1BB != 0 &&
-               king_move_mask & precomputed::G1BB != 0 &&
+               legal_king_moves & precomputed::F1BB != precomputed::EMPTY &&
+               king_move_mask & precomputed::G1BB != precomputed::EMPTY &&
                !self.square_attacked_non_pawn(precomputed::G1) {
                 moves.add_move(Move::new(precomputed::E1, precomputed::G1, &Move::KING_CASTLE));
             }
             if b.castling_rights.contains(CastlingFlags::WQ) &&
-               legal_king_moves & precomputed::D1BB != 0 &&
-               king_move_mask & precomputed::C1BB != 0 &&
+               legal_king_moves & precomputed::D1BB != precomputed::EMPTY &&
+               king_move_mask & precomputed::C1BB != precomputed::EMPTY &&
+               b.piece_list[precomputed::B1 as usize] == None &&
                !self.square_attacked_non_pawn(precomputed::C1) {
                 moves.add_move(Move::new(precomputed::E1, precomputed::C1, &Move::QUEEN_CASTLE));
             }
         } else {
             if b.castling_rights.contains(CastlingFlags::BK) &&
-               legal_king_moves & precomputed::F8BB != 0 &&
-               king_move_mask & precomputed::G8BB != 0 &&
+               legal_king_moves & precomputed::F8BB != precomputed::EMPTY &&
+               king_move_mask & precomputed::G8BB != precomputed::EMPTY &&
                !self.square_attacked_non_pawn(precomputed::G8) {
-                moves.add_move(Move::new(precomputed::E8, precomputed::G8, &Move::KING_CASTLE));
-            }
-            if b.castling_rights.contains(CastlingFlags::BQ) &&
-               legal_king_moves & precomputed::D8BB != 0 &&
-               king_move_mask & precomputed::C8BB != 0 &&
+                   moves.add_move(Move::new(precomputed::E8, precomputed::G8, &Move::KING_CASTLE));
+                }
+                if b.castling_rights.contains(CastlingFlags::BQ) &&
+                legal_king_moves & precomputed::D8BB != precomputed::EMPTY &&
+                king_move_mask & precomputed::C8BB != precomputed::EMPTY &&
+                b.piece_list[precomputed::B8 as usize] == None &&
                !self.square_attacked_non_pawn(precomputed::C8) {
                 moves.add_move(Move::new(precomputed::E8, precomputed::C8, &Move::QUEEN_CASTLE));
             }
@@ -125,20 +127,31 @@ impl<'a> MoveGenerator<'a> {
         let mut can_push_double: Bitboard;
         let mut can_take_d1: Bitboard;
         let mut can_take_d2: Bitboard;
+        let mut ep_take: Bitboard;
 
         // TODO: Less copying of code (inlining reverse shifting operation?)
         if b.player_to_move == White {
             let not_hor_or_d_pinned = not_pinned | not_d_pinned & (pin_mask_hv >> 8);
             let forward_empty = not_hor_or_d_pinned & (!b.bbs[Any(Neutral)] >> 8);
 
-            let not_pinned_d1 = precomputed::NOT_A_FILE & ((only_d_pinned & (pin_mask_d >> 7)) | not_pinned) & (movable) >> 7;
-            let not_pinned_d2 = precomputed::NOT_H_FILE & ((only_d_pinned & (pin_mask_d >> 9)) | not_pinned) & (movable) >> 9;
+            let not_pinned_d1 = precomputed::NOT_A_FILE & ((only_d_pinned & (pin_mask_d >> 7)) | not_pinned);
+            let not_pinned_d2 = precomputed::NOT_H_FILE & ((only_d_pinned & (pin_mask_d >> 9)) | not_pinned);
             
             can_push_single = forward_empty & (movable >> 8);
             can_push_double = forward_empty & precomputed::SECOND_ROW & ((!b.bbs[Any(Neutral)] & movable) >> 16);
             
-            can_take_d1 = not_pinned_d1 & (b.bbs[Any(Black)] >> 7);
-            can_take_d2 = not_pinned_d2 & (b.bbs[Any(Black)] >> 9);
+            can_take_d1 = not_pinned_d1 & ((b.bbs[Any(Black)] & movable) >> 7);
+            can_take_d2 = not_pinned_d2 & ((b.bbs[Any(Black)] & movable) >> 9);
+
+            ep_take = not_pinned_d1 & (b.en_passant_mask >> 7)
+                    | not_pinned_d2 & (b.en_passant_mask >> 9);
+
+            // TODO: horizontal pin check (edge case)
+
+            while ep_take != precomputed::EMPTY {
+                let mv = Move::new(util::pop_ls1b(&mut ep_take), util::ls1b_from_bitboard(b.en_passant_mask), &Move::EP_CAPTURE);
+                moves.add_move(mv);
+            }
 
             self.add_moves_with_function(moves, &mut can_push_single, |sq| util::bitboard_from_square(sq + 8), SpecialBitsContainer::MayPromote(Move::empty()));
             self.add_moves_with_function(moves, &mut can_push_double, |sq| util::bitboard_from_square(sq + 16), SpecialBitsContainer::ExactMoveBits(Move::DOUBLE_PAWN_PUSH));
@@ -156,6 +169,16 @@ impl<'a> MoveGenerator<'a> {
             
             can_take_d1 = not_pinned_d1 & (b.bbs[Any(White)] << 7);
             can_take_d2 = not_pinned_d2 & (b.bbs[Any(White)] << 9);
+
+            ep_take = not_pinned_d1 & (b.en_passant_mask << 7)
+                    | not_pinned_d2 & (b.en_passant_mask << 9);
+
+            // TODO: horizontal pin check (edge case)
+
+            while ep_take != precomputed::EMPTY {
+                let mv = Move::new(util::pop_ls1b(&mut ep_take), util::ls1b_from_bitboard(b.en_passant_mask), &Move::EP_CAPTURE);
+                moves.add_move(mv);
+            }
 
             self.add_moves_with_function(moves, &mut can_push_single, |sq| util::bitboard_from_square(sq - 8), SpecialBitsContainer::MayPromote(Move::empty()));
             self.add_moves_with_function(moves, &mut can_push_double, |sq| util::bitboard_from_square(sq - 16), SpecialBitsContainer::ExactMoveBits(Move::DOUBLE_PAWN_PUSH));
@@ -266,7 +289,7 @@ impl<'a> MoveGenerator<'a> {
             let attacker = rook_attacks & ray & b.bbs[HVslider(b.opponent_color)];
             if attacker != precomputed::EMPTY {
                 // Consider precomputing kingban tables from king square, only XOR attacker needed instead of trailingzeros
-                king_ban |= precomputed::ROOK_MOVES[util::ls1b_from_bitboard(attacker)];
+                king_ban |= precomputed::ROOK_MOVES[util::ls1b_from_bitboard(attacker) as usize];
 
                 if already_in_check {
                     return (0, king_ban); // double check
@@ -284,7 +307,7 @@ impl<'a> MoveGenerator<'a> {
 
             let attacker = bishop_attacks & ray & b.bbs[Dslider(b.opponent_color)];
             if attacker != precomputed::EMPTY {
-                king_ban |= precomputed::BISHOP_MOVES[util::ls1b_from_bitboard(attacker)];
+                king_ban |= precomputed::BISHOP_MOVES[util::ls1b_from_bitboard(attacker) as usize];
 
                 if already_in_check {
                     return (0, king_ban); // double check

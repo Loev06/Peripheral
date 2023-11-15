@@ -7,19 +7,19 @@ pub const fn square_from_coord(x: usize, y: usize) -> Square {
     (x + (y << 3)) as Square
 }
 
-pub const fn ls1b_from_bitboard(bb: Bitboard) -> usize {
-    bb.trailing_zeros() as usize
+pub const fn ls1b_from_bitboard(bb: Bitboard) -> Square {
+    bb.trailing_zeros() as Square
 }
 
 pub fn pop_ls1b(bb: &mut Bitboard) -> Square {
     debug_assert!(*bb != precomputed::EMPTY);
-    let sq = ls1b_from_bitboard(*bb) as Square;
+    let sq = ls1b_from_bitboard(*bb);
     *bb ^= bitboard_from_square(sq);
     sq
 }
 
 pub fn pop_ls1b_as_bb(bb: &mut Bitboard) -> Bitboard {
-    let out = bitboard_from_square(ls1b_from_bitboard(*bb) as Square);
+    let out = bitboard_from_square(ls1b_from_bitboard(*bb));
     *bb ^= out;
     out
 }

@@ -1,6 +1,7 @@
 use bitflags::bitflags;
 
 bitflags! {
+    #[derive(Debug)]
     pub struct CastlingFlags: u8 {
         const WK = 0b0000_0001;
         const WQ = 0b0000_0010;
