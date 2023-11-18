@@ -1,4 +1,4 @@
-use super::{super::{precomputed, Bitboard, Square, util, PieceType::*, Color::*}, MoveGenerator};
+use super::{super::{precomputed, Bitboard, Square, util, PieceType::*, Color::*, Board}, MoveGenerator};
 
 // Thanks to GunshipPenguin for these magic numbers
 // https://github.com/GunshipPenguin/shallow-blue/blob/c6d7e9615514a86533a9e0ffddfc96e058fc9cfd/src/attacks.h
@@ -29,17 +29,17 @@ const BISHOP_SHIFTS: [usize; 64] = [
 const ROOK_MAGICS: [Magic; 64] = precompute_magics_array(ROOK_MAGIC_NUMBERS, ROOK_SHIFTS, precomputed::ROOK_MOVES_NO_BORDER);
 const BISHOP_MAGICS: [Magic; 64] = precompute_magics_array(BISHOP_MAGIC_NUMBERS, BISHOP_SHIFTS, precomputed::BISHOP_MOVES_NO_BORDER);
 
-impl<'a> MoveGenerator<'a> {
+impl MoveGenerator {
     pub fn precompute_lookup_tables(&mut self) {
         self.rook_lookups = precompute_lookups(precomputed::ROOK_DIRS, ROOK_MAGICS);
         self.bishop_lookups = precompute_lookups(precomputed::BISHOP_DIRS, BISHOP_MAGICS);
     }
 
-    pub fn get_rook_attacks(&self, sq: Square) -> Bitboard {
-        self.rook_lookups[ROOK_MAGICS[sq as usize].calculate_index(self.b.bbs[Any(Neutral)])]
+    pub fn get_rook_attacks(&self, b: &Board, sq: Square) -> Bitboard {
+        self.rook_lookups[ROOK_MAGICS[sq as usize].calculate_index(b.bbs[Any(Neutral)])]
     }
-    pub fn get_bishop_attacks(&self, sq: Square) -> Bitboard {
-        self.bishop_lookups[BISHOP_MAGICS[sq as usize].calculate_index(self.b.bbs[Any(Neutral)])]
+    pub fn get_bishop_attacks(&self, b: &Board, sq: Square) -> Bitboard {
+        self.bishop_lookups[BISHOP_MAGICS[sq as usize].calculate_index(b.bbs[Any(Neutral)])]
     }
 }
 

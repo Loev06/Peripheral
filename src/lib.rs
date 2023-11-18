@@ -1,19 +1,18 @@
 use std::error::Error;
 
-pub use chess::{MoveGenerator, Board, MoveList};
+pub use chess::{MoveGenerator, Board, MoveList, Perft};
 
 #[allow(dead_code)]
 mod chess;
 
-const FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1";
+const FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 pub fn run_bot() -> Result<(), Box<dyn Error>> {
     println!("Main bot function");
     
-    let mut moves = MoveList::new();
-    let board = &Board::try_from_fen(FEN)?;
-    MoveGenerator::new(&board).generate_legal_moves(&mut moves);
-    dbg!(moves.count);
+    let board = Board::try_from_fen(FEN)?;
+    let mut perft = Perft::new(board)?;
+    dbg!(perft.perft(7, true, false));
 
     Ok(())
 }

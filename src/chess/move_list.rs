@@ -4,7 +4,8 @@ use super::{Move, MAX_MOVE_COUNT};
 
 pub struct MoveList {
     pub moves: [Move; MAX_MOVE_COUNT],
-    pub count: usize
+    pub count: usize,
+    idx: usize
 }
 
 impl MoveList {
@@ -14,7 +15,8 @@ impl MoveList {
                 let block: mem::MaybeUninit<[Move; MAX_MOVE_COUNT]> = mem::MaybeUninit::uninit();
                 block.assume_init()
             },
-            count: 0
+            count: 0,
+            idx: 0
         }
     }
 
@@ -25,6 +27,18 @@ impl MoveList {
 
     pub fn reset_count(&mut self) {
         self.count = 0;
+    }
+}
+
+impl Iterator for MoveList {
+    type Item = Move;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.idx += 1;
+        if self.idx > self.count {
+            return None;
+        }
+        Some(*unsafe { self.moves.get_unchecked(self.idx - 1) })
     }
 }
 

@@ -1,7 +1,7 @@
 use std::fmt;
 use bitflags::bitflags;
 
-use super::{Square, precomputed};
+use super::{Square, precomputed, Color, PieceType::{self, *}};
 
 const SPECIAL_MOVE_NAMES: [&str; 16] = [
     "",
@@ -24,7 +24,7 @@ const SPECIAL_MOVE_NAMES: [&str; 16] = [
 
 // https://www.chessprogramming.org/Encoding_Moves#From-To_Based
 bitflags! {
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, PartialEq, Eq)]
     pub struct Move: u16 {
         const FROM      = 0b0000_000000_111111;
         const TO        = 0b0000_111111_000000;
@@ -43,7 +43,11 @@ bitflags! {
         const QUEEN_CASTLE = Self::SPECIAL0.bits() | Self::SPECIAL1.bits();
         const EP_CAPTURE = Self::CAPTURE.bits() | Self::SPECIAL0.bits();
 
+        const KNIGHT_PROMOTION = Self::PROMOTION.bits();
+        const BISHOP_PROMOTION = Self::PROMOTION.bits() | Self::SPECIAL0.bits();
+        const ROOK_PROMOTION = Self::PROMOTION.bits() | Self::SPECIAL1.bits();
         const QUEEN_PROMOTION = Self::PROMOTION.bits() | Self::SPECIAL0.bits() | Self::SPECIAL1.bits();
+
         const QUEEN_TO_KNIGHT = Self::SPECIAL0.bits() | Self::SPECIAL1.bits();
         const KNIGHT_TO_ROOK = Self::SPECIAL1.bits();
         const ROOK_TO_BISHOP = Self::SPECIAL0.bits() | Self::SPECIAL1.bits();
@@ -54,6 +58,28 @@ impl Move {
     pub fn new(from: Square, to: Square, special_bits: &Move) -> Move {
         Self((special_bits.bits() | (to as u16) << 6 | (from as u16)).into())
     }
+
+    pub fn get_from(&self) -> Square {
+        (self.0.bits() & Self::FROM.bits()) as Square
+    }
+    pub fn get_to(&self) -> Square {
+        ((self.0.bits() & Self::TO.bits()) >> 6) as Square
+    }
+    pub fn get_promotion_piece(&self, color: Color) -> PieceType {
+        match self.union(Self::QUEEN_PROMOTION) {
+            Self::QUEEN_PROMOTION => Queen(color),
+            Self::KNIGHT_PROMOTION => Knight(color),
+            Self::ROOK_PROMOTION => Rook(color),
+            Self::BISHOP_PROMOTION => Bishop(color),
+            _ => panic!("Not a valid promotion move: {}", self.0)
+        }
+    }
+    pub fn is_ep(&self) -> bool {
+        self.contains(Move::EP_CAPTURE)
+    }
+    pub fn is_promotion(&self) -> bool {
+        self.intersects(Move::PROMOTION)
+    }
 }
 
 impl fmt::Debug for Move {
@@ -62,6 +88,15 @@ impl fmt::Debug for Move {
             precomputed::SQUARE_NAMES[self.intersection(Move::FROM).bits() as usize],
             precomputed::SQUARE_NAMES[self.intersection(Move::TO).bits() as usize >> 6],
             SPECIAL_MOVE_NAMES[self.intersection(Move::SPECIAL_BITS).bits() as usize >> 12])
+        )
+    }
+}
+
+impl fmt::Display for Move {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_fmt(format_args!("{}{}",
+            precomputed::SQUARE_NAMES[self.intersection(Move::FROM).bits() as usize],
+            precomputed::SQUARE_NAMES[self.intersection(Move::TO).bits() as usize >> 6])
         )
     }
 }

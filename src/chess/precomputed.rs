@@ -16,6 +16,9 @@ pub const BISHOP_RAYS:  [[Bitboard; 4]; 64] = precompute_slider_rays(BISHOP_DIRS
 pub const ROOK_MOVES:   [Bitboard; 64] = merge_slider_rays(ROOK_RAYS);
 pub const BISHOP_MOVES: [Bitboard; 64] = merge_slider_rays(BISHOP_RAYS);
 
+pub const WHITE_PAWN_CAPTURES: [Bitboard; 64] = precompute_white_pawn_captures();
+pub const BLACK_PAWN_CAPTURES: [Bitboard; 64] = precompute_black_pawn_captures();
+
 pub const ROOK_MOVES_NO_BORDER: [Bitboard; 64] = merge_slider_rays(
     precompute_slider_rays(ROOK_DIRS, true)
 );
@@ -33,30 +36,38 @@ pub const SEVENTH_ROW: Bitboard = 0x00ff000000000000;
 pub const EMPTY      : Bitboard = 0x0000000000000000;
 pub const FULL       : Bitboard = 0xffffffffffffffff;
 
+pub const A1: Square = 0;
 pub const B1: Square = 1;
 pub const C1: Square = 2;
 pub const D1: Square = 3;
 pub const E1: Square = 4;
 pub const F1: Square = 5;
 pub const G1: Square = 6;
+pub const H1: Square = 7;
+pub const A8: Square = 56;
 pub const B8: Square = 57;
 pub const C8: Square = 58;
 pub const D8: Square = 59;
 pub const E8: Square = 60;
 pub const F8: Square = 61;
 pub const G8: Square = 62;
+pub const H8: Square = 63;
+pub const A1BB: Bitboard = util::bitboard_from_square(A1);
 pub const B1BB: Bitboard = util::bitboard_from_square(B1);
 pub const C1BB: Bitboard = util::bitboard_from_square(C1);
 pub const D1BB: Bitboard = util::bitboard_from_square(D1);
 pub const E1BB: Bitboard = util::bitboard_from_square(E1);
 pub const F1BB: Bitboard = util::bitboard_from_square(F1);
 pub const G1BB: Bitboard = util::bitboard_from_square(G1);
+pub const H1BB: Bitboard = util::bitboard_from_square(H1);
+pub const A8BB: Bitboard = util::bitboard_from_square(A8);
 pub const B8BB: Bitboard = util::bitboard_from_square(B8);
 pub const C8BB: Bitboard = util::bitboard_from_square(C8);
 pub const D8BB: Bitboard = util::bitboard_from_square(D8);
 pub const E8BB: Bitboard = util::bitboard_from_square(E8);
 pub const F8BB: Bitboard = util::bitboard_from_square(F8);
 pub const G8BB: Bitboard = util::bitboard_from_square(G8);
+pub const H8BB: Bitboard = util::bitboard_from_square(H8);
 
 pub const SQUARE_NAMES: [&str; 64] = [
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
@@ -173,4 +184,26 @@ const fn precompute_between_bitboards() -> [[Bitboard; 64]; 64] {
     }
 
     between_bitboards
+}
+
+const fn precompute_white_pawn_captures() -> [Bitboard; 64] {
+    let mut pawn_captures = [EMPTY; 64];
+    let mut sq = 0;
+    while sq < 64 {
+        pawn_captures[sq as usize] = ((util::bitboard_from_square(sq) & NOT_A_FILE) << 7)
+                                   | ((util::bitboard_from_square(sq) & NOT_H_FILE) << 9);
+        sq += 1;
+    }
+    pawn_captures
+}
+
+const fn precompute_black_pawn_captures() -> [Bitboard; 64] {
+    let mut pawn_captures = [EMPTY; 64];
+    let mut sq = 0;
+    while sq < 64 {
+        pawn_captures[sq as usize] = ((util::bitboard_from_square(sq) & NOT_A_FILE) >> 9)
+                                   | ((util::bitboard_from_square(sq) & NOT_H_FILE) >> 7);
+        sq += 1;
+    }
+    pawn_captures
 }

@@ -17,8 +17,11 @@ pub use self::move_gen::MoveGenerator;
 mod move_list;
 pub use self::move_list::MoveList;
 
+mod perft;
+pub use perft::Perft;
+
 mod precomputed;
-pub mod util;
+mod util;
 
 pub const MAX_MOVE_COUNT: usize = 218;
 

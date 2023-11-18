@@ -8,6 +8,11 @@ use super::{
 };
 use enum_map::{self, EnumMap};
 
+mod make_move;
+mod undo_move;
+use self::undo_move::GSHistory;
+mod parse_fen;
+
 struct FENdata<'a> {
     rows: Vec<&'a str>,
     color: char,
@@ -31,10 +36,8 @@ impl<'a> FENdata<'a> {
     }
 }
 
-pub struct Board {
-    pub bbs: EnumMap<PieceType, Bitboard>,
-    pub piece_list: [Option<PieceType>; 64],
-
+#[derive(Clone, Copy)]
+pub struct GameState {
     pub player_to_move: Color,
     pub opponent_color: Color,
 
@@ -42,123 +45,77 @@ pub struct Board {
     pub opponent_king_square: Square,
 
     pub castling_rights: CastlingFlags,
-    pub en_passant_mask: Bitboard
+    pub en_passant_mask: Bitboard,
+}
+
+impl GameState {
+    fn empty() -> Self {
+        Self {
+            player_to_move: Color::White,
+            opponent_color: Color::Black,
+
+            playing_king_square: 64,
+            opponent_king_square: 64,
+
+            castling_rights: CastlingFlags::empty(),
+            en_passant_mask: precomputed::EMPTY,
+        }
+    }
+
+    fn switch_sides(&mut self) {
+        (self.player_to_move, self.opponent_color) = (self.opponent_color, self.player_to_move);
+    }
+}
+
+pub struct Board {
+    pub bbs: EnumMap<PieceType, Bitboard>,
+    pub piece_list: [Option<PieceType>; 64],
+    pub gs: GameState,
+    pub gs_history: GSHistory
 }
 
 impl Board {
-    pub fn new() -> Self {
-        let mut b = Self {
-            bbs: Self::init_piece_bitboards(),
-            piece_list: [None; 64],
-            player_to_move: Color::White,
-            opponent_color: Color::Black,
-            playing_king_square: 64,
-            opponent_king_square: 64,
-            castling_rights: CastlingFlags::ALL,
-            en_passant_mask: precomputed::EMPTY
-        };
-        b.piece_list[precomputed::E1 as usize] = Some(King(White));
-        b.piece_list[precomputed::E8 as usize] = Some(King(Black));
-        b.playing_king_square = util::ls1b_from_bitboard(b.bbs[King(b.player_to_move)]) as Square;
-        b.playing_king_square = util::ls1b_from_bitboard(b.bbs[King(b.opponent_color)]) as Square;
-        b
-    }
-
     pub fn empty() -> Self {
         Self {
             bbs: enum_map::enum_map! {_ => precomputed::EMPTY},
             piece_list: [None; 64],
-            player_to_move: Color::White,
-            opponent_color: Color::Black,
-            playing_king_square: 64,
-            opponent_king_square: 64,
-            castling_rights: CastlingFlags::empty(),
-            en_passant_mask: precomputed::EMPTY
+            gs: GameState::empty(),
+            gs_history: GSHistory::new()
         }
     }
 
-    pub fn try_from_fen(fen: &str) -> Result<Self, Box<dyn Error>> {
-        let fen_data = FENdata::try_parse(fen)?;
-        let mut b = Self::empty();
-        
-        for (row, row_str) in fen_data.rows.iter().enumerate() {
-            let mut col: usize = 0;
+    pub fn place_piece(&mut self, pt: PieceType, sq: Square) {
+        debug_assert!(self.piece_list[sq as usize] == None);
+        debug_assert!(self.bbs[pt] & util::bitboard_from_square(sq) == precomputed::EMPTY);
 
-            for pt in row_str.chars() {
-                if pt.is_ascii_digit() {
-                    col += pt.to_digit(10).expect("Not a digit") as usize;
-                    continue;
-                }
-
-                let color = if pt.is_uppercase() {White} else {Black};
-
-                let pt = match pt.to_ascii_uppercase() {
-                    'P' => Pawn(color),
-                    'N' => Knight(color),
-                    'B' => Bishop(color),
-                    'R' => Rook(color),
-                    'Q' => Queen(color),
-                    'K' => King(color),
-                    p => return Err(format!("Not a valid piece: {p}").into())
-                };
-
-                b.add_piece(pt, util::square_from_coord(col, 7 - row));
-
-                col += 1;
-            }
-        }
-
-        b.player_to_move = if fen_data.color == 'w' {White} else {Black};
-        b.opponent_color = -b.player_to_move;
-
-        for c in fen_data.castling.chars() {
-            b.castling_rights.insert(match c {
-                'K' => CastlingFlags::WK,
-                'Q' => CastlingFlags::WQ,
-                'k' => CastlingFlags::BK,
-                'q' => CastlingFlags::BQ,
-                '-' => CastlingFlags::empty(),
-                c => return Err(format!("Not a valid castling state: {}", c).into())
-            });
-        }
-
-        if let Some(idx) = precomputed::SQUARE_NAMES.iter().position(|&s| s == fen_data.en_passant) {
-            b.en_passant_mask = util::bitboard_from_square(idx as Square);
-        }
-
-        // TODO: Add parsing for rest of the FEN data
-        
-        Self::update_bitboards(&mut b.bbs);
-        b.playing_king_square = util::ls1b_from_bitboard(b.bbs[King(b.player_to_move)]) as Square;
-        b.opponent_king_square = util::ls1b_from_bitboard(b.bbs[King(b.opponent_color)]) as Square;
-
-        Ok(b)
-    }
-
-    fn add_piece(&mut self, pt: PieceType, sq: Square) {
         self.piece_list[sq as usize] = Some(pt);
-        self.bbs[pt] |= util::bitboard_from_square(sq);
+        self.bbs[pt] ^= util::bitboard_from_square(sq);
     }
 
-    fn init_piece_bitboards() -> EnumMap<PieceType, u64> {
-        let mut em: EnumMap<PieceType, u64> = enum_map::enum_map! {
-            King(White) => precomputed::E1BB,
-            King(Black) => precomputed::E8BB,
-            Knight(White) => precomputed::BORDER,
-            _ => precomputed::EMPTY
-        };
-        Board::update_bitboards(&mut em);
-        em
+    pub fn remove_piece(&mut self, pt: PieceType, sq: Square) {
+        debug_assert!(self.piece_list[sq as usize] == Some(pt));
+        debug_assert!(self.bbs[pt] & util::bitboard_from_square(sq) != precomputed::EMPTY);
+
+        self.piece_list[sq as usize] = None;
+        self.bbs[pt] ^= util::bitboard_from_square(sq);
     }
 
-    fn update_bitboards(em: &mut EnumMap<PieceType, Bitboard>) {
-        em[Any(White)] = em[Pawn(White)] | em[Knight(White)] | em[Bishop(White)] | em[Rook(White)] | em[Queen(White)] | em[King(White)];
-        em[Any(Black)] = em[Pawn(Black)] | em[Knight(Black)] | em[Bishop(Black)] | em[Rook(Black)] | em[Queen(Black)] | em[King(Black)];
-        em[Any(Neutral)] = em[Any(Black)] | em[Any(White)];
+    pub fn move_piece(&mut self, pt: PieceType, from: Square, to: Square) {
+        self.remove_piece(pt, from);
+        self.place_piece(pt, to);
+    }
 
-        em[HVslider(White)] = em[Rook(White)] | em[Queen(White)];
-        em[HVslider(Black)] = em[Rook(Black)] | em[Queen(Black)];
-        em[Dslider(White)] = em[Bishop(White)] | em[Queen(White)];
-        em[Dslider(Black)] = em[Bishop(Black)] | em[Queen(Black)];
+    pub fn update_board_data(&mut self) {
+        self.bbs[Any(White)] = self.bbs[Pawn(White)] | self.bbs[Knight(White)] | self.bbs[Bishop(White)] | self.bbs[Rook(White)] | self.bbs[Queen(White)] | self.bbs[King(White)];
+        self.bbs[Any(Black)] = self.bbs[Pawn(Black)] | self.bbs[Knight(Black)] | self.bbs[Bishop(Black)] | self.bbs[Rook(Black)] | self.bbs[Queen(Black)] | self.bbs[King(Black)];
+        self.bbs[Any(Neutral)] = self.bbs[Any(Black)] | self.bbs[Any(White)];
+
+        self.bbs[HVslider(White)] = self.bbs[Rook(White)] | self.bbs[Queen(White)];
+        self.bbs[HVslider(Black)] = self.bbs[Rook(Black)] | self.bbs[Queen(Black)];
+        self.bbs[Dslider(White)] = self.bbs[Bishop(White)] | self.bbs[Queen(White)];
+        self.bbs[Dslider(Black)] = self.bbs[Bishop(Black)] | self.bbs[Queen(Black)];
+
+        self.gs.playing_king_square = util::ls1b_from_bitboard(self.bbs[King(self.gs.player_to_move)]);
+        self.gs.opponent_king_square = util::ls1b_from_bitboard(self.bbs[King(self.gs.opponent_color)]);
     }
 }
