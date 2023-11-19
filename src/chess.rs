@@ -21,7 +21,7 @@ mod perft;
 pub use perft::Perft;
 
 mod precomputed;
-mod util;
+pub mod util;
 
 pub const MAX_MOVE_COUNT: usize = 218;
 

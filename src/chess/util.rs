@@ -1,6 +1,41 @@
 use crate::chess::precomputed;
 
-use super::{Square, Bitboard};
+use super::{Square, Bitboard, PieceType::{self, *}, Color::*};
+
+pub const fn get_piece_name(pt: Option<PieceType>) -> char {
+    match pt {
+        Some(pt) => match pt {
+            Pawn(White)     => 'P',
+            Knight(White)   => 'N',
+            Bishop(White)   => 'B',
+            Rook(White)     => 'R',
+            Queen(White)    => 'Q',
+            King(White)     => 'K',
+            Pawn(Black)     => 'p',
+            Knight(Black)   => 'n',
+            Bishop(Black)   => 'b',
+            Rook(Black)     => 'r',
+            Queen(Black)    => 'q',
+            King(Black)     => 'k',
+            _ => panic!("Not a valid piece")
+        }
+        None => '.'
+    }
+}
+
+pub fn print_bb(bb: Bitboard) {
+    println!(
+        "{}",
+        (0..8).rev().map(|y| {
+            (0..8).map(|x| {
+                if bb & bitboard_from_square(square_from_coord(x, y)) == precomputed::EMPTY {"."} else {"X"}
+            })
+            .fold(String::new(), |a, b| a + &b)
+            .to_owned()
+        })
+        .fold(String::new(), |a, b| a + &b + "\n")
+    );
+}
 
 pub const fn square_from_coord(x: usize, y: usize) -> Square {
     debug_assert!((x + (y << 3)) < 64);

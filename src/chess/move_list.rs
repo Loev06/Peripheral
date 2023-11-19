@@ -2,6 +2,7 @@ use std::{mem, fmt};
 
 use super::{Move, MAX_MOVE_COUNT};
 
+#[derive(Clone, Copy)]
 pub struct MoveList {
     pub moves: [Move; MAX_MOVE_COUNT],
     pub count: usize,

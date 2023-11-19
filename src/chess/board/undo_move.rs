@@ -69,9 +69,7 @@ impl Board {
                 self.place_piece(Pawn(self.gs.opponent_color), to ^ 8);
             }
         }
-
-
-
+        self.update_board_data();
     }
 }
 

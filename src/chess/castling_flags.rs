@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use bitflags::bitflags;
 
 use super::{Square, precomputed};
@@ -23,6 +25,19 @@ impl CastlingFlags {
 
     pub fn update(&mut self, from: Square, to: Square) {
         *self = *self & CASTLING_PER_SQUARE[from as usize] & CASTLING_PER_SQUARE[to as usize];
+    }
+}
+
+impl Display for CastlingFlags {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str({
+            let mut s = String::new();
+            if self.contains(CastlingFlags::WK) {s += "K";}
+            if self.contains(CastlingFlags::WQ) {s += "Q";}
+            if self.contains(CastlingFlags::BK) {s += "k";}
+            if self.contains(CastlingFlags::BQ) {s += "q";}
+            if s == "" {String::from("-")} else {s}
+        }.as_str())
     }
 }
 

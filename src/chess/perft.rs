@@ -4,8 +4,8 @@ use super::{MoveGenerator, Board, MoveList};
 
 
 pub struct Perft {
-    board: Board,
-    mg: MoveGenerator
+    pub board: Board,
+    pub mg: MoveGenerator
 }
 
 impl Perft {

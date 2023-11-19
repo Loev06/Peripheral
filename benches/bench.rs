@@ -15,14 +15,14 @@ fn run_perft(perft: &mut Perft, depth: u8) {
 fn criterion_benchmark(c: &mut Criterion) {
     let mut moves = MoveList::new();
 
+    let board_perft = Board::try_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").expect("Incorrect fen");
     let board_start = Board::try_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").expect("Incorrect fen");
     let board_pawnless = Board::try_from_fen("rnbqkbnr/8/8/8/8/4K3/8/RNBQ1BNR w kq - 0 1").expect("Incorrect fen");
     let board_random = Board::try_from_fen("2r3k1/5pb1/p3p1pp/q1Pp3n/br1P4/5P2/P1RQNBPP/4RBK1 w - - 5 24").expect("Incorrect fen");
     let board_castling = Board::try_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1").expect("Incorrect fen");
-
+    
     let mg = MoveGenerator::new();
-    let mut perft = Perft::new(board_start).expect("An error occured");
-    let board_start = Board::try_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").expect("Incorrect fen");
+    let mut perft = Perft::new(board_perft).expect("An error occured");
     
     c.bench_function("Perft 6 startpos", |b| b.iter(|| run_perft(black_box(&mut perft), black_box(6))));
 

@@ -1,5 +1,5 @@
 
-use std::error::Error;
+use std::{error::Error, fmt::{Debug, Display}};
 
 use super::{
     Color, Color::*,
@@ -36,7 +36,7 @@ impl<'a> FENdata<'a> {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct GameState {
     pub player_to_move: Color,
     pub opponent_color: Color,
@@ -64,6 +64,23 @@ impl GameState {
 
     fn switch_sides(&mut self) {
         (self.player_to_move, self.opponent_color) = (self.opponent_color, self.player_to_move);
+    }
+}
+
+impl Display for GameState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(format!(
+            "curr player: {}\nking squares: {}, {}\ncastling: {}\nep: {}",
+            if self.player_to_move == White {'w'} else {'b'},
+            precomputed::SQUARE_NAMES[self.playing_king_square as usize],
+            precomputed::SQUARE_NAMES[self.opponent_king_square as usize],
+            self.castling_rights,
+            if self.en_passant_mask == precomputed::EMPTY {
+                "-"
+            } else {
+                precomputed::SQUARE_NAMES[util::ls1b_from_bitboard(self.en_passant_mask) as usize]
+            }
+        ).as_str())
     }
 }
 
@@ -117,5 +134,25 @@ impl Board {
 
         self.gs.playing_king_square = util::ls1b_from_bitboard(self.bbs[King(self.gs.player_to_move)]);
         self.gs.opponent_king_square = util::ls1b_from_bitboard(self.bbs[King(self.gs.opponent_color)]);
+    }
+}
+
+impl Display for Board {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(format!(
+            "\n{}\n{}\n",
+            (0..8).rev().map(|y| {
+                (0..8).map(|x| {
+                    util::get_piece_name(self.piece_list[util::square_from_coord(x, y) as usize])
+                        .to_string()
+                })
+                .fold(String::new(), |a, b| a + &b + " ")
+                .trim_end()
+                .to_owned()
+            })
+            .fold(String::new(), |a, b| a + &b + "\n")
+            .trim_end(),
+            self.gs
+        ).as_str())
     }
 }

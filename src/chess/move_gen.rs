@@ -86,13 +86,13 @@ impl MoveGenerator {
                king_move_mask & precomputed::G8BB != precomputed::EMPTY &&
                !self.square_attacked_non_pawn(b, precomputed::G8) &&
                precomputed::BETWEEN_BITBOARDS[precomputed::E8 as usize][precomputed::H8 as usize] & b.bbs[Any(Neutral)] == precomputed::EMPTY {
-                   moves.add_move(Move::new(precomputed::E8, precomputed::G8, &Move::KING_CASTLE));
-                }
-                if b.gs.castling_rights.contains(CastlingFlags::BQ) &&
-                legal_king_moves & precomputed::D8BB != precomputed::EMPTY &&
-                king_move_mask & precomputed::C8BB != precomputed::EMPTY &&
-                !self.square_attacked_non_pawn(b, precomputed::C8) &&
-                precomputed::BETWEEN_BITBOARDS[precomputed::E8 as usize][precomputed::A8 as usize] & b.bbs[Any(Neutral)] == precomputed::EMPTY {
+                moves.add_move(Move::new(precomputed::E8, precomputed::G8, &Move::KING_CASTLE));
+            }
+            if b.gs.castling_rights.contains(CastlingFlags::BQ) &&
+               legal_king_moves & precomputed::D8BB != precomputed::EMPTY &&
+               king_move_mask & precomputed::C8BB != precomputed::EMPTY &&
+               !self.square_attacked_non_pawn(b, precomputed::C8) &&
+               precomputed::BETWEEN_BITBOARDS[precomputed::E8 as usize][precomputed::A8 as usize] & b.bbs[Any(Neutral)] == precomputed::EMPTY {
                 moves.add_move(Move::new(precomputed::E8, precomputed::C8, &Move::QUEEN_CASTLE));
             }
         }

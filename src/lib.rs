@@ -1,6 +1,6 @@
 use std::error::Error;
 
-pub use chess::{MoveGenerator, Board, MoveList, Perft};
+pub use chess::{MoveGenerator, Board, MoveList, Perft, util, PieceType::*, Color::*};
 
 #[allow(dead_code)]
 mod chess;
@@ -12,7 +12,16 @@ pub fn run_bot() -> Result<(), Box<dyn Error>> {
     
     let board = Board::try_from_fen(FEN)?;
     let mut perft = Perft::new(board)?;
-    dbg!(perft.perft(7, true, false));
+
+    println!("{}", perft.board);
+    util::print_bb(perft.board.bbs[Knight(White)]);
+    dbg!(perft.perft(6, true, false));
+
+    perft.board.update_board_data();
+
+    println!("{}", perft.board);
+    util::print_bb(perft.board.bbs[Knight(White)]);
+    dbg!(perft.perft(6, true, false));
 
     Ok(())
 }
