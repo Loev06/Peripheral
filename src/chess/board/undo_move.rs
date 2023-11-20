@@ -55,9 +55,7 @@ impl Board {
         } else {
             self.move_piece(new_piece_type, to, from);
 
-            if let Some(pt) = gs_entry.captured_piece { // normal capture
-                self.place_piece(pt, to);
-            } else if mv.intersects(Move::SPECIAL1) { // only set when promoting or castling, so must be castle
+            if mv.intersects(Move::SPECIAL1) { // only set when promoting or castling, so must be castle
                 match to {
                     precomputed::G1 => self.move_piece(Rook(White), precomputed::F1, precomputed::H1),
                     precomputed::C1 => self.move_piece(Rook(White), precomputed::D1, precomputed::A1),
@@ -69,6 +67,11 @@ impl Board {
                 self.place_piece(Pawn(self.gs.opponent_color), to ^ 8);
             }
         }
+
+        if let Some(pt) = gs_entry.captured_piece { // normal capture
+            self.place_piece(pt, to);
+        }
+        
         self.update_board_data();
     }
 }

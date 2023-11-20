@@ -22,7 +22,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let board_castling = Board::try_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1").expect("Incorrect fen");
     
     let mg = MoveGenerator::new();
-    let mut perft = Perft::new(board_perft).expect("An error occured");
+    let mut perft = Perft::new(board_perft);
     
     c.bench_function("Perft 6 startpos", |b| b.iter(|| run_perft(black_box(&mut perft), black_box(6))));
 

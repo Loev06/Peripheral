@@ -66,12 +66,12 @@ impl Move {
         ((self.0.bits() & Self::TO.bits()) >> 6) as Square
     }
     pub fn get_promotion_piece(&self, color: Color) -> PieceType {
-        match self.union(Self::QUEEN_PROMOTION) {
+        match self.intersection(Self::QUEEN_PROMOTION) {
             Self::QUEEN_PROMOTION => Queen(color),
             Self::KNIGHT_PROMOTION => Knight(color),
             Self::ROOK_PROMOTION => Rook(color),
             Self::BISHOP_PROMOTION => Bishop(color),
-            _ => panic!("Not a valid promotion move: {}", self.0)
+            _ => panic!("Not a valid promotion move: {}", self)
         }
     }
     pub fn is_ep(&self) -> bool {
@@ -84,19 +84,21 @@ impl Move {
 
 impl fmt::Debug for Move {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("{}{}{}",
+        f.write_fmt(format_args!("{}{}{} ({})",
             precomputed::SQUARE_NAMES[self.intersection(Move::FROM).bits() as usize],
             precomputed::SQUARE_NAMES[self.intersection(Move::TO).bits() as usize >> 6],
-            SPECIAL_MOVE_NAMES[self.intersection(Move::SPECIAL_BITS).bits() as usize >> 12])
+            SPECIAL_MOVE_NAMES[self.intersection(Move::SPECIAL_BITS).bits() as usize >> 12],
+            self.0)
         )
     }
 }
 
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_fmt(format_args!("{}{}",
+        f.write_fmt(format_args!("{}{}{}",
             precomputed::SQUARE_NAMES[self.intersection(Move::FROM).bits() as usize],
-            precomputed::SQUARE_NAMES[self.intersection(Move::TO).bits() as usize >> 6])
+            precomputed::SQUARE_NAMES[self.intersection(Move::TO).bits() as usize >> 6],
+            SPECIAL_MOVE_NAMES[self.intersection(Move::SPECIAL_BITS).bits() as usize >> 12])
         )
     }
 }

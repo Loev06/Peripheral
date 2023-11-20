@@ -1,4 +1,4 @@
-use super::{super::{precomputed, Bitboard, Square, util, PieceType::*, Color::*, Board}, MoveGenerator};
+use super::{super::{precomputed, Bitboard, Square, util}, MoveGenerator};
 
 // Thanks to GunshipPenguin for these magic numbers
 // https://github.com/GunshipPenguin/shallow-blue/blob/c6d7e9615514a86533a9e0ffddfc96e058fc9cfd/src/attacks.h
@@ -35,11 +35,11 @@ impl MoveGenerator {
         self.bishop_lookups = precompute_lookups(precomputed::BISHOP_DIRS, BISHOP_MAGICS);
     }
 
-    pub fn get_rook_attacks(&self, b: &Board, sq: Square) -> Bitboard {
-        self.rook_lookups[ROOK_MAGICS[sq as usize].calculate_index(b.bbs[Any(Neutral)])]
+    pub fn get_rook_attacks(&self, occ: Bitboard, sq: Square) -> Bitboard {
+        self.rook_lookups[ROOK_MAGICS[sq as usize].calculate_index(occ)]
     }
-    pub fn get_bishop_attacks(&self, b: &Board, sq: Square) -> Bitboard {
-        self.bishop_lookups[BISHOP_MAGICS[sq as usize].calculate_index(b.bbs[Any(Neutral)])]
+    pub fn get_bishop_attacks(&self, occ: Bitboard, sq: Square) -> Bitboard {
+        self.bishop_lookups[BISHOP_MAGICS[sq as usize].calculate_index(occ)]
     }
 }
 

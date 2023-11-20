@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use super::{MoveGenerator, Board, MoveList};
 
 
@@ -9,11 +7,11 @@ pub struct Perft {
 }
 
 impl Perft {
-    pub fn new(b: Board) -> Result<Self, Box<dyn Error>> {
-        Ok(Self {
+    pub fn new(b: Board) -> Self {
+        Self {
             board: b,
             mg: MoveGenerator::new()
-        })
+        }
     }
 
     pub fn perft(&mut self, depth: u8, is_root: bool, debug: bool) -> u64 {
@@ -21,6 +19,7 @@ impl Perft {
         self.mg.generate_legal_moves(&self.board, &mut moves);
 
         if debug {
+            println!("{}", self.board);
             dbg!(&moves);
         }
 

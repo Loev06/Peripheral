@@ -52,7 +52,7 @@ impl MoveGenerator {
             let mut hv_pinned_queens = b.bbs[Queen(b.gs.player_to_move)] & pin_mask_hv;
             self.add_moves_with_function(
                 b, moves, &mut hv_pinned_queens,
-                |sq: Square| self.get_rook_attacks(b, sq) & movable & pin_mask_hv,
+                |sq: Square| self.get_rook_attacks(b.bbs[Any(Neutral)], sq) & movable & pin_mask_hv,
                 SpecialBitsContainer::NormalMove
             );
 
@@ -112,8 +112,8 @@ impl MoveGenerator {
     fn square_attacked_non_pawn(&self, b: &Board, sq: Square) -> bool {
            precomputed::KNIGHT_MOVES[sq as usize] & b.bbs[Knight(b.gs.opponent_color)] != 0
         || precomputed::KING_MOVES[sq as usize]   & b.bbs[King(b.gs.opponent_color)] != 0
-        || self.get_rook_attacks(b, sq)              & b.bbs[HVslider(b.gs.opponent_color)] != 0
-        || self.get_bishop_attacks(b, sq)            & b.bbs[Dslider(b.gs.opponent_color)] != 0
+        || self.get_rook_attacks(b.bbs[Any(Neutral)], sq)              & b.bbs[HVslider(b.gs.opponent_color)] != 0
+        || self.get_bishop_attacks(b.bbs[Any(Neutral)], sq)            & b.bbs[Dslider(b.gs.opponent_color)] != 0
     }
 
     fn add_pawn_moves(&self, b: &Board, moves: &mut MoveList, movable: Bitboard, pin_mask_hv: Bitboard, pin_mask_d: Bitboard) {
@@ -146,13 +146,6 @@ impl MoveGenerator {
             ep_take = not_pinned_d1 & (b.gs.en_passant_mask >> 7)
                     | not_pinned_d2 & (b.gs.en_passant_mask >> 9);
 
-            // TODO: horizontal pin check (edge case)
-
-            while ep_take != precomputed::EMPTY {
-                let mv = Move::new(util::pop_ls1b(&mut ep_take), util::ls1b_from_bitboard(b.gs.en_passant_mask), &Move::EP_CAPTURE);
-                moves.add_move(mv);
-            }
-
             self.add_moves_with_function(b, moves, &mut can_push_single, |sq| util::bitboard_from_square(sq + 8), SpecialBitsContainer::MayPromote(Move::empty()));
             self.add_moves_with_function(b, moves, &mut can_push_double, |sq| util::bitboard_from_square(sq + 16), SpecialBitsContainer::ExactMoveBits(Move::DOUBLE_PAWN_PUSH));
             self.add_moves_with_function(b, moves, &mut can_take_d1, |sq| util::bitboard_from_square(sq + 7), SpecialBitsContainer::MayPromote(Move::CAPTURE));
@@ -172,20 +165,21 @@ impl MoveGenerator {
 
             ep_take = not_pinned_d1 & (b.gs.en_passant_mask << 7)
                     | not_pinned_d2 & (b.gs.en_passant_mask << 9);
-
-            // TODO: horizontal pin check (edge case)
-
-            while ep_take != precomputed::EMPTY {
-                let mv = Move::new(util::pop_ls1b(&mut ep_take), util::ls1b_from_bitboard(b.gs.en_passant_mask), &Move::EP_CAPTURE);
-                moves.add_move(mv);
-            }
-
+            
             self.add_moves_with_function(b, moves, &mut can_push_single, |sq| util::bitboard_from_square(sq - 8), SpecialBitsContainer::MayPromote(Move::empty()));
             self.add_moves_with_function(b, moves, &mut can_push_double, |sq| util::bitboard_from_square(sq - 16), SpecialBitsContainer::ExactMoveBits(Move::DOUBLE_PAWN_PUSH));
             self.add_moves_with_function(b, moves, &mut can_take_d1, |sq| util::bitboard_from_square(sq - 7), SpecialBitsContainer::MayPromote(Move::CAPTURE));
             self.add_moves_with_function(b, moves, &mut can_take_d2, |sq| util::bitboard_from_square(sq - 9), SpecialBitsContainer::MayPromote(Move::CAPTURE));
         }
 
+        while ep_take != precomputed::EMPTY {
+            let taking_pawn_square = util::pop_ls1b(&mut ep_take);
+            if self.is_horizontal_ep_pinned(b, taking_pawn_square) {
+                break;
+            }
+            let mv = Move::new(taking_pawn_square, util::ls1b_from_bitboard(b.gs.en_passant_mask), &Move::EP_CAPTURE);
+            moves.add_move(mv);
+        }
     }
 
     fn add_moves_of_piece_type(&self, b: &Board, moves: &mut MoveList, pt: PieceType, movable: Bitboard, blockading_pin: Bitboard, restricting_pin: Bitboard) {
@@ -195,10 +189,10 @@ impl MoveGenerator {
 
         let move_gen = |sq: Square| match pt {
             Knight(_) => precomputed::KNIGHT_MOVES[sq as usize] & movable,
-            Bishop(_) => self.get_bishop_attacks(b, sq) & movable,
-            Rook(_) => self.get_rook_attacks(b, sq) & movable,
-            Queen(_) => (self.get_bishop_attacks(b, sq)
-                       | self.get_rook_attacks(b, sq)) & movable,
+            Bishop(_) => self.get_bishop_attacks(b.bbs[Any(Neutral)], sq) & movable,
+            Rook(_) => self.get_rook_attacks(b.bbs[Any(Neutral)], sq) & movable,
+            Queen(_) => (self.get_bishop_attacks(b.bbs[Any(Neutral)], sq)
+                       | self.get_rook_attacks(b.bbs[Any(Neutral)], sq)) & movable,
             _ => precomputed::EMPTY
         };
 
@@ -206,8 +200,8 @@ impl MoveGenerator {
             // Pinned knights may not move
             Knight(_) => precomputed::EMPTY,
             // This method only covers diagonally pinned queens. HV pinned queens get added later.
-            Bishop(_) | Queen(_) => self.get_bishop_attacks(b, sq) & movable & restricting_pin,
-            Rook(_) => self.get_rook_attacks(b, sq) & movable & restricting_pin,
+            Bishop(_) | Queen(_) => self.get_bishop_attacks(b.bbs[Any(Neutral)], sq) & movable & restricting_pin,
+            Rook(_) => self.get_rook_attacks(b.bbs[Any(Neutral)], sq) & movable & restricting_pin,
             _ => precomputed::EMPTY
         };
 
@@ -282,7 +276,7 @@ impl MoveGenerator {
         
         let mut already_in_check = check_mask != precomputed::EMPTY;
         
-        let rook_attacks: Bitboard = self.get_rook_attacks(b, king_square);
+        let rook_attacks: Bitboard = self.get_rook_attacks(b.bbs[Any(Neutral)], king_square);
         for ray in precomputed::ROOK_RAYS[king_square as usize] {
 
             let attacker = rook_attacks & ray & b.bbs[HVslider(b.gs.opponent_color)];
@@ -301,7 +295,7 @@ impl MoveGenerator {
             }
         }
 
-        let bishop_attacks: Bitboard = self.get_bishop_attacks(b, king_square);
+        let bishop_attacks: Bitboard = self.get_bishop_attacks(b.bbs[Any(Neutral)], king_square);
         for ray in precomputed::BISHOP_RAYS[king_square as usize] {
 
             let attacker = bishop_attacks & ray & b.bbs[Dslider(b.gs.opponent_color)];
@@ -334,5 +328,11 @@ impl MoveGenerator {
             }
         }
         pin_mask
+    }
+
+    fn is_horizontal_ep_pinned(&self, b: &Board, taking_pawn_square: Square) -> bool {
+        let changed_pieces = util::bitboard_from_square(taking_pawn_square) | util::bitboard_from_square(util::ls1b_from_bitboard(b.gs.en_passant_mask) ^ 8) | b.gs.en_passant_mask;
+        let rays = self.get_rook_attacks(b.bbs[Any(Neutral)] ^ changed_pieces, b.gs.playing_king_square);
+        rays & b.bbs[HVslider(b.gs.opponent_color)] != precomputed::EMPTY
     }
 }
