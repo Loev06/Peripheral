@@ -8,6 +8,8 @@ use super::{
 };
 use enum_map::{self, EnumMap};
 
+pub mod zobrist;
+use self::zobrist::Zobrist;
 mod make_move;
 mod undo_move;
 use self::undo_move::GSHistory;
@@ -88,7 +90,10 @@ pub struct Board {
     pub bbs: EnumMap<PieceType, Bitboard>,
     pub piece_list: [Option<PieceType>; 64],
     pub gs: GameState,
-    pub gs_history: GSHistory
+    pub gs_history: GSHistory,
+    pub hash: u64,
+
+    zobrists: Zobrist
 }
 
 impl Board {
@@ -97,7 +102,9 @@ impl Board {
             bbs: enum_map::enum_map! {_ => precomputed::EMPTY},
             piece_list: [None; 64],
             gs: GameState::empty(),
-            gs_history: GSHistory::new()
+            gs_history: GSHistory::new(),
+            hash: 0,
+            zobrists: Zobrist::new().expect("Failed to generate zobrist values.")
         }
     }
 
@@ -140,11 +147,11 @@ impl Board {
 impl Display for Board {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(format!(
-            "\n{}\n{}\n",
+            "\n{}\nhash: {}\n{}\n",
             (0..8).rev().map(|y| {
                 (0..8).map(|x| {
                     util::get_piece_name(self.piece_list[util::square_from_coord(x, y) as usize])
-                        .to_string()
+                    .to_string()
                 })
                 .fold(String::new(), |a, b| a + &b + " ")
                 .trim_end()
@@ -152,6 +159,7 @@ impl Display for Board {
             })
             .fold(String::new(), |a, b| a + &b + "\n")
             .trim_end(),
+            self.hash,
             self.gs
         ).as_str())
     }

@@ -1,5 +1,6 @@
 mod board;
 pub use self::board::Board;
+pub use self::board::zobrist::Zobrist;
 
 mod chess_move;
 pub use self::chess_move::Move;
