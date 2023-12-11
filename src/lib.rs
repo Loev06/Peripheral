@@ -1,12 +1,12 @@
 use std::error::Error;
 use serde::{Deserialize, Serialize};
 
-pub use chess::{MoveGenerator, Board, MoveList, Perft, util, PieceType::*, Color::*, Zobrist};
+pub use chess::{MoveGenerator, Board, MoveList, Perft, util, PieceType::*, Color::*};
 
 #[allow(dead_code)]
 mod chess;
 
-const FEN: &str = "8/1P6/p7/3k4/K5p1/6P1/7P/8 w - - 1 3";
+const FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 pub fn run_bot() -> Result<(), Box<dyn Error>> {
     println!("Main bot function");
@@ -15,7 +15,7 @@ pub fn run_bot() -> Result<(), Box<dyn Error>> {
     let mut perft = Perft::new(board);
 
     println!("{}", perft.board);
-    dbg!(perft.perft(2, true, false));
+    perft.verb_perft(7, false, false);
 
     Ok(())
 }
@@ -47,9 +47,9 @@ mod tests {
             let board = Board::try_from_fen(&test_position.fen).expect("Error loading board from fen.");
             let mut perft = Perft::new(board);
 
-            if perft.perft(test_position.depth, false, false) != test_position.nodes {
+            if perft.hash_perft(test_position.depth, false, false) != test_position.nodes {
                 println!("Incorrect perft result:");
-                perft.perft(test_position.depth, true, false);
+                perft.verb_perft(test_position.depth, true, false);
             } else {
                 println!("Finished {}/{}", i + 1, test_positions.len());
             }

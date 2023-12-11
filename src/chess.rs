@@ -1,22 +1,22 @@
 mod board;
-pub use self::board::Board;
-pub use self::board::zobrist::Zobrist;
+pub use board::Board;
+pub use board::zobrist;
 
 mod chess_move;
-pub use self::chess_move::Move;
+pub use chess_move::Move;
 
 mod castling_flags;
-pub use self::castling_flags::CastlingFlags;
+pub use castling_flags::CastlingFlags;
 
 mod piece_type;
-pub use self::piece_type::PieceType;
-pub use self::piece_type::Color;
+pub use piece_type::PieceType;
+pub use piece_type::Color;
 
 mod move_gen;
-pub use self::move_gen::MoveGenerator;
+pub use move_gen::MoveGenerator;
 
 mod move_list;
-pub use self::move_list::MoveList;
+pub use move_list::MoveList;
 
 mod perft;
 pub use perft::Perft;

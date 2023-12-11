@@ -66,13 +66,16 @@ impl Move {
         ((self.0.bits() & Self::TO.bits()) >> 6) as Square
     }
     pub fn get_promotion_piece(&self, color: Color) -> PieceType {
-        match self.intersection(Self::QUEEN_PROMOTION) {
-            Self::QUEEN_PROMOTION => PieceType::from_color(WQueen, color),
-            Self::KNIGHT_PROMOTION => PieceType::from_color(WKnight, color),
-            Self::ROOK_PROMOTION => PieceType::from_color(WRook, color),
-            Self::BISHOP_PROMOTION => PieceType::from_color(WBishop, color),
-            _ => panic!("Not a valid promotion move: {}", self)
-        }
+        PieceType::from_color(
+            match self.intersection(Self::QUEEN_PROMOTION) {
+                Self::QUEEN_PROMOTION => WQueen,
+                Self::KNIGHT_PROMOTION => WKnight,
+                Self::ROOK_PROMOTION => WRook,
+                Self::BISHOP_PROMOTION => WBishop,
+                _ => panic!("Not a valid promotion move: {}", self)
+            },
+            color
+        )
     }
     pub fn is_ep(&self) -> bool {
         self.contains(Move::EP_CAPTURE)

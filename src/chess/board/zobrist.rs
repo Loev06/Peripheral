@@ -1,34 +1,71 @@
-use std::error::Error;
+// https://github.com/official-stockfish/Stockfish/blob/36db936e769a2e7a95fc4032eec3b79251bbaef5/src/position.cpp#L119
 
-use rand::prelude::*;
-use rand_chacha::ChaCha8Rng;
+pub const NUM_ZOBRIST_VALUES: usize = 12 * 64 + 8 + 16 + 1;
 
-pub const NUM_ZOBRIST_VALUES: usize = 12 * 64 + 1 + 16 + 8;
+pub const ZOBRIST_PIECE_SQUARE: [[u64; 64]; 12] = precompute_piece_square().0;
+pub const ZOBRIST_EP_SQUARE: [u64; 65] = precompute_ep_square().0;
+pub const ZOBRIST_CASTLING: [u64; 16] = precompute_castling().0;
+pub const ZOBRIST_BLACK_TO_MOVE: u64 = precompute_black_to_move().0;
 
-pub struct Zobrist {
-    pub piece_square: [[u64; 64]; 12],
-    pub black_to_move: u64,
-    pub castling: [u64; 16],
-    pub ep_file: [u64; 8]
+const fn rand(seed: u64) -> (u64, u64) {
+    let mut seed = seed;
+    seed ^= seed >> 12;
+    seed ^= seed << 25;
+    seed ^= seed >> 27;
+    (seed.overflowing_mul(2685821657736338717u64).0, seed)
 }
 
-impl Zobrist {
-    pub fn new() -> Result<Zobrist, Box<dyn Error>> {
-        let mut rng = ChaCha8Rng::seed_from_u64(0);
-        let mut zobrist = Zobrist {
-            piece_square: [[0; 64]; 12],
-            black_to_move: 0,
-            castling: [0; 16],
-            ep_file: [0; 8]
-        };
-        
-        for i in 0..12 {
-            rng.try_fill(&mut zobrist.piece_square[i])?;
-        }
-        zobrist.black_to_move = rng.next_u64();
-        rng.try_fill(&mut zobrist.castling)?;
-        rng.try_fill(&mut zobrist.ep_file)?;
+const fn precompute_piece_square<'a>() -> ([[u64; 64]; 12], u64) {
+    let mut seed = 1070372;
+    let mut vals = [[0; 64]; 12];
 
-        Ok(zobrist)
+    let mut pt = 0;
+    while pt < 12 {
+        let mut sq = 0;
+        while sq < 64 {
+            (vals[pt][sq], seed) = rand(seed);
+            sq += 1;
+        }
+        pt += 1;
     }
+
+    (vals, seed)
+}
+
+const fn precompute_ep_square<'a>() -> ([u64; 65], u64) {
+    let mut seed = precompute_piece_square().1;
+    let mut vals = [0; 65];
+
+    let mut file = 0;
+    while file < 8 {
+        let num;
+        (num, seed) = rand(seed);
+
+        let mut rank = 0;
+        while rank < 8 {
+            vals[file + 8 * rank] = num;
+            rank += 1;
+        }
+        file += 1;
+    }
+
+    (vals, seed)
+}
+
+const fn precompute_castling<'a>() -> ([u64; 16], u64) {
+    let mut seed = precompute_ep_square().1;
+    let mut vals = [0; 16];
+
+    let mut cr = 0;
+    while cr < 16 {
+        (vals[cr], seed) = rand(seed);
+        cr += 1;
+    }
+
+    (vals, seed)
+}
+
+const fn precompute_black_to_move<'a>() -> (u64, u64) {
+    let seed = precompute_ep_square().1;
+    rand(seed)
 }

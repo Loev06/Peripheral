@@ -28,6 +28,7 @@ impl MoveList {
 
     pub fn reset_count(&mut self) {
         self.count = 0;
+        self.idx = 0;
     }
 }
 

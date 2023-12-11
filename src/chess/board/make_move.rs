@@ -1,4 +1,4 @@
-use super::{Board, super::Move, PieceType, PieceType::*, util, precomputed, undo_move::GSHistoryEntry};
+use super::{Board, super::Move, PieceType, PieceType::*, util, precomputed, undo_move::GSHistoryEntry, zobrist::*};
 
 impl Board {
     pub fn make_move(&mut self, mv: &Move) {
@@ -17,8 +17,13 @@ impl Board {
             gs: self.gs,
             captured_piece: capturing_piece
         });
+
+        self.key ^= ZOBRIST_EP_SQUARE[util::ls1b_from_bitboard(self.gs.en_passant_mask) as usize];
         self.gs.en_passant_mask = precomputed::EMPTY; // Double pawn push check is later
+
+        self.key ^= ZOBRIST_CASTLING[self.gs.castling_rights.bits() as usize];
         self.gs.castling_rights.update(from, to);
+        self.key ^= ZOBRIST_CASTLING[self.gs.castling_rights.bits() as usize];
         
         if let Some(pt) = capturing_piece {
             self.remove_piece(pt, to);
@@ -28,7 +33,8 @@ impl Board {
                     if mv.is_ep() {
                         self.remove_piece(PieceType::from_color(WPawn, self.gs.opponent_color), to ^ 8); // En-passant
                     } else if mv.intersects(Move::DOUBLE_PAWN_PUSH) {
-                        self.gs.en_passant_mask = util::bitboard_from_square(to ^ 8) // Double pawn push
+                        self.gs.en_passant_mask = util::bitboard_from_square(to ^ 8); // Double pawn push
+                        self.key ^= ZOBRIST_EP_SQUARE[to as usize];
                     }
                 },
                 WKing | BKing => {
@@ -48,7 +54,7 @@ impl Board {
         self.remove_piece(moving_piece, from);
         self.place_piece(new_piece_type, to);
         
-        self.gs.switch_sides();
+        self.switch_sides();
         self.update_board_data();
     }
 }

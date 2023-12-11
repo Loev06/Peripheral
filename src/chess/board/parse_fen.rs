@@ -85,9 +85,9 @@ impl Board {
         
         b.update_board_data();
         gs.playing_king_square = util::ls1b_from_bitboard(b.bbs[WKing + gs.pt_offset]) as Square;
-        gs.opponent_king_square = util::ls1b_from_bitboard(b.bbs[BKing - gs.pt_offset]) as Square;
     
         b.gs = gs;
+        b.key = b.make_key();
 
         Ok(b)
     }

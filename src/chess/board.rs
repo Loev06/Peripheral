@@ -8,10 +8,9 @@ use super::{
 };
 
 pub mod zobrist;
-use self::zobrist::Zobrist;
 mod make_move;
 mod undo_move;
-use self::undo_move::GSHistory;
+use self::{undo_move::GSHistory, zobrist::*};
 mod parse_fen;
 
 struct FENdata<'a> {
@@ -44,7 +43,6 @@ pub struct GameState {
     pub pt_offset: PieceType,
 
     pub playing_king_square: Square,
-    pub opponent_king_square: Square,
 
     pub castling_rights: CastlingFlags,
     pub en_passant_mask: Bitboard,
@@ -58,7 +56,6 @@ impl GameState {
             pt_offset: WPawn,
 
             playing_king_square: 64,
-            opponent_king_square: 64,
 
             castling_rights: CastlingFlags::empty(),
             en_passant_mask: precomputed::EMPTY,
@@ -71,17 +68,16 @@ impl GameState {
             WPawn => BPawn,
             BPawn => WPawn,
             pt => panic!("Not a valid pt_offset: {pt}")
-        }
+        };
     }
 }
 
 impl Display for GameState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(format!(
-            "curr player: {}\nking squares: {}, {}\ncastling: {}\nep: {}",
+            "curr player: {}\nking square: {}\ncastling: {}\nep: {}",
             if self.player_to_move == White {'w'} else {'b'},
             precomputed::SQUARE_NAMES[self.playing_king_square as usize],
-            precomputed::SQUARE_NAMES[self.opponent_king_square as usize],
             self.castling_rights,
             if self.en_passant_mask == precomputed::EMPTY {
                 "-"
@@ -93,13 +89,11 @@ impl Display for GameState {
 }
 
 pub struct Board {
-    pub bbs: [u64; 12 + 7],
+    pub bbs: [u64; 19],
     pub piece_list: [Option<PieceType>; 64],
     pub gs: GameState,
     pub gs_history: GSHistory,
-    pub hash: u64,
-
-    zobrists: Zobrist
+    pub key: u64,
 }
 
 impl Board {
@@ -109,9 +103,13 @@ impl Board {
             piece_list: [None; 64],
             gs: GameState::empty(),
             gs_history: GSHistory::new(),
-            hash: 0,
-            zobrists: Zobrist::new().expect("Failed to generate zobrist values.")
+            key: 0
         }
+    }
+
+    pub fn switch_sides(&mut self) {
+        self.gs.switch_sides();
+        self.key ^= ZOBRIST_BLACK_TO_MOVE;
     }
 
     pub fn place_piece(&mut self, pt: PieceType, sq: Square) {
@@ -120,6 +118,7 @@ impl Board {
 
         self.piece_list[sq as usize] = Some(pt);
         self.bbs[pt as usize] ^= util::bitboard_from_square(sq);
+        self.key ^= ZOBRIST_PIECE_SQUARE[pt as usize][sq as usize];
     }
 
     pub fn remove_piece(&mut self, pt: PieceType, sq: Square) {
@@ -128,6 +127,7 @@ impl Board {
 
         self.piece_list[sq as usize] = None;
         self.bbs[pt as usize] ^= util::bitboard_from_square(sq);
+        self.key ^= ZOBRIST_PIECE_SQUARE[pt as usize][sq as usize];
     }
 
     pub fn move_piece(&mut self, pt: PieceType, from: Square, to: Square) {
@@ -146,14 +146,37 @@ impl Board {
         self.bbs[BDSlider as usize] = self.bbs[BBishop as usize] | self.bbs[BQueen as usize];
 
         self.gs.playing_king_square = util::ls1b_from_bitboard(self.bbs[WKing + self.gs.pt_offset]);
-        self.gs.opponent_king_square = util::ls1b_from_bitboard(self.bbs[WKing + self.gs.pt_offset]);
+    }
+
+    pub fn make_key(&self) -> u64 {
+        let mut key = 0;
+
+        for pt in 0..12 {
+            let mut bb = self.bbs[pt];
+            while bb != precomputed::EMPTY {
+                let sq = util::pop_ls1b(&mut bb);
+                key ^= ZOBRIST_PIECE_SQUARE[pt][sq as usize];
+            }
+        }
+
+        if self.gs.en_passant_mask != precomputed::EMPTY {
+            key ^= ZOBRIST_EP_SQUARE[util::get_square_x(util::ls1b_from_bitboard(self.gs.en_passant_mask)) as usize];
+        }
+
+        if self.gs.player_to_move == Black {
+            key ^= ZOBRIST_BLACK_TO_MOVE;
+        }
+
+        key ^= ZOBRIST_CASTLING[self.gs.castling_rights.bits() as usize];
+
+        key
     }
 }
 
 impl Display for Board {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(format!(
-            "\n{}\nhash: {}\n{}\n",
+            "\n{}\nkey: {:X}\n{}\n",
             (0..8).rev().map(|y| {
                 (0..8).map(|x| {
                     match self.piece_list[util::square_from_coord(x, y) as usize] {
@@ -161,13 +184,13 @@ impl Display for Board {
                         None => String::from(" "),
                     }
                 })
-                .fold(String::new(), |a, b| a + &b + " ")
+                .fold(String::from("| "), |a, b| a + &b + " | ")
                 .trim_end()
                 .to_owned()
             })
-            .fold(String::new(), |a, b| a + &b + "\n")
+            .fold(String::from("+---+---+---+---+---+---+---+---+\n"), |a, b| a + &b + "\n+---+---+---+---+---+---+---+---+\n")
             .trim_end(),
-            self.hash,
+            self.key,
             self.gs
         ).as_str())
     }

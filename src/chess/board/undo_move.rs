@@ -1,6 +1,6 @@
 use std::mem;
 
-use super::{super::{Board, Move, PieceType, PieceType::*, precomputed}, GameState};
+use super::{super::{Board, Move, PieceType, PieceType::*, precomputed}, GameState, zobrist::*, util};
 
 const MOVE_HISTORY_CAPACITY: usize = 512;
 
@@ -41,6 +41,9 @@ impl GSHistory {
 
 impl Board {
     pub fn undo_move(&mut self, mv: &Move) {
+        self.key ^= ZOBRIST_CASTLING[self.gs.castling_rights.bits() as usize];
+        self.key ^= ZOBRIST_EP_SQUARE[util::ls1b_from_bitboard(self.gs.en_passant_mask) as usize];
+
         let gs_entry = self.gs_history.pop();
         self.gs = gs_entry.gs;
         
@@ -72,54 +75,9 @@ impl Board {
             self.place_piece(pt, to);
         }
         
+        self.key ^= ZOBRIST_BLACK_TO_MOVE; // Don't call switch_sides, as old gs containing switched data is loaded
+        self.key ^= ZOBRIST_CASTLING[self.gs.castling_rights.bits() as usize];
+        self.key ^= ZOBRIST_EP_SQUARE[util::ls1b_from_bitboard(self.gs.en_passant_mask) as usize];
         self.update_board_data();
     }
 }
-
-// struct OldSquareData {
-//     piece: Option<PieceType>,
-//     square: Square
-// }
-
-// impl OldSquareData {
-//     fn from_square(sq: Square, b: &Board) -> Self {
-//         Self {
-//             piece: b.piece_list[sq as usize],
-//             square: sq
-//         }
-//     }
-// }
-
-// pub struct UndoMoveData {
-//     from: OldSquareData,
-//     to: OldSquareData,
-//     old_ep_mask: Bitboard,
-//     old_castling_flags: u8
-// }
-
-// impl UndoMoveData {
-//     pub fn new(from: Square, to: Square, b: &Board) -> Self {
-//         Self {
-//             from: OldSquareData::from_square(from, b),
-//             to: OldSquareData::from_square(to, b),
-//             old_ep_mask: b.en_passant_mask,
-//             old_castling_flags: b.castling_rights.bits()
-//         }
-//     }
-
-//     pub fn undo_move(&self, b: &mut Board) {
-//         let from = self.from;
-//         let to = self.to;
-//         b.piece_list[from.square as usize] = from.piece;
-//         b.piece_list[to.square as usize] = to.piece;
-
-//         let moving_piece_diffs = util::bitboard_from_square(from.square) | util::bitboard_from_square(to.square);
-//         b.bbs[from.piece] ^= moving_piece_diffs;
-//         if let Some(pt) = to.piece {
-//             b.bbs[pt] ^= util::bitboard_from_square(to.square);
-//         }
-
-//         b.en_passant_mask = self.old_ep_mask;
-//         b.castling_rights = CastlingFlags::new(self.old_castling_flags);
-//     }
-// }
