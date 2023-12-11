@@ -6,7 +6,7 @@ pub use chess::{MoveGenerator, Board, MoveList, Perft, util, PieceType::*, Color
 #[allow(dead_code)]
 mod chess;
 
-const FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+const FEN: &str = "8/1P6/p7/3k4/K5p1/6P1/7P/8 w - - 1 3";
 
 pub fn run_bot() -> Result<(), Box<dyn Error>> {
     println!("Main bot function");
@@ -15,7 +15,7 @@ pub fn run_bot() -> Result<(), Box<dyn Error>> {
     let mut perft = Perft::new(board);
 
     println!("{}", perft.board);
-    dbg!(perft.perft(6, true, false));
+    dbg!(perft.perft(2, true, false));
 
     Ok(())
 }

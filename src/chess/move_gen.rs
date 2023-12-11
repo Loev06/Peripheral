@@ -29,7 +29,7 @@ impl MoveGenerator {
         moves.reset_count();
 
         let (check_mask, king_ban) = self.generate_check_mask_and_king_ban(b);
-        let opponent_or_empty = !b.bbs[Any(b.gs.player_to_move)];
+        let opponent_or_empty = !b.bbs[PieceType::from_color(AnyWhite, b.gs.player_to_move) as usize];
         
         let king_move_mask = opponent_or_empty & !king_ban;
         let mut relevant_king_squares = precomputed::KING_MOVES[b.gs.playing_king_square as usize] & king_move_mask;
@@ -38,21 +38,21 @@ impl MoveGenerator {
         if check_mask != precomputed::EMPTY {
             let movable = opponent_or_empty & check_mask;
 
-            let opponent_hv_sliders = b.bbs[HVslider(b.gs.opponent_color)];
-            let opponent_d_sliders = b.bbs[Dslider(b.gs.opponent_color)];
+            let opponent_hv_sliders = b.bbs[PieceType::from_color(WHVSlider, b.gs.opponent_color) as usize];
+            let opponent_d_sliders = b.bbs[PieceType::from_color(WDSlider, b.gs.opponent_color) as usize];
             let pin_mask_hv = self.generate_pinmask(b, opponent_hv_sliders & precomputed::ROOK_MOVES[b.gs.playing_king_square as usize]);
             let pin_mask_d = self.generate_pinmask(b, opponent_d_sliders & precomputed::BISHOP_MOVES[b.gs.playing_king_square as usize]);
             
             self.add_pawn_moves(b, moves, movable, pin_mask_hv, pin_mask_d);
-            self.add_moves_of_piece_type(b, moves, Knight(b.gs.player_to_move), movable, pin_mask_hv | pin_mask_d, precomputed::EMPTY);
-            self.add_moves_of_piece_type(b, moves, Bishop(b.gs.player_to_move), movable, pin_mask_hv , pin_mask_d);
-            self.add_moves_of_piece_type(b, moves, Rook(b.gs.player_to_move), movable, pin_mask_d , pin_mask_hv);
-            self.add_moves_of_piece_type(b, moves, Queen(b.gs.player_to_move), movable, pin_mask_hv , pin_mask_d);
+            self.add_moves_of_piece_type(b, moves, PieceType::from_color(WKnight, b.gs.player_to_move), movable, pin_mask_hv | pin_mask_d, precomputed::EMPTY);
+            self.add_moves_of_piece_type(b, moves, PieceType::from_color(WBishop, b.gs.player_to_move), movable, pin_mask_hv , pin_mask_d);
+            self.add_moves_of_piece_type(b, moves, PieceType::from_color(WRook, b.gs.player_to_move), movable, pin_mask_d , pin_mask_hv);
+            self.add_moves_of_piece_type(b, moves, PieceType::from_color(WQueen, b.gs.player_to_move), movable, pin_mask_hv , pin_mask_d);
 
-            let mut hv_pinned_queens = b.bbs[Queen(b.gs.player_to_move)] & pin_mask_hv;
+            let mut hv_pinned_queens = b.bbs[PieceType::from_color(WQueen, b.gs.player_to_move) as usize] & pin_mask_hv;
             self.add_moves_with_function(
                 b, moves, &mut hv_pinned_queens,
-                |sq: Square| self.get_rook_attacks(b.bbs[Any(Neutral)], sq) & movable & pin_mask_hv,
+                |sq: Square| self.get_rook_attacks(b.bbs[AnyPiece as usize], sq) & movable & pin_mask_hv,
                 SpecialBitsContainer::NormalMove
             );
 
@@ -70,14 +70,14 @@ impl MoveGenerator {
                legal_king_moves & precomputed::F1BB != precomputed::EMPTY &&
                king_move_mask & precomputed::G1BB != precomputed::EMPTY &&
                !self.square_attacked_non_pawn(b, precomputed::G1) &&
-               precomputed::BETWEEN_BITBOARDS[precomputed::E1 as usize][precomputed::H1 as usize] & b.bbs[Any(Neutral)] == precomputed::EMPTY {
+               precomputed::BETWEEN_BITBOARDS[precomputed::E1 as usize][precomputed::H1 as usize] & b.bbs[AnyPiece as usize] == precomputed::EMPTY {
                 moves.add_move(Move::new(precomputed::E1, precomputed::G1, &Move::KING_CASTLE));
             }
             if b.gs.castling_rights.contains(CastlingFlags::WQ) &&
                legal_king_moves & precomputed::D1BB != precomputed::EMPTY &&
                king_move_mask & precomputed::C1BB != precomputed::EMPTY &&
                !self.square_attacked_non_pawn(b, precomputed::C1) &&
-               precomputed::BETWEEN_BITBOARDS[precomputed::E1 as usize][precomputed::A1 as usize] & b.bbs[Any(Neutral)] == precomputed::EMPTY {
+               precomputed::BETWEEN_BITBOARDS[precomputed::E1 as usize][precomputed::A1 as usize] & b.bbs[AnyPiece as usize] == precomputed::EMPTY {
                 moves.add_move(Move::new(precomputed::E1, precomputed::C1, &Move::QUEEN_CASTLE));
             }
         } else {
@@ -85,14 +85,14 @@ impl MoveGenerator {
                legal_king_moves & precomputed::F8BB != precomputed::EMPTY &&
                king_move_mask & precomputed::G8BB != precomputed::EMPTY &&
                !self.square_attacked_non_pawn(b, precomputed::G8) &&
-               precomputed::BETWEEN_BITBOARDS[precomputed::E8 as usize][precomputed::H8 as usize] & b.bbs[Any(Neutral)] == precomputed::EMPTY {
+               precomputed::BETWEEN_BITBOARDS[precomputed::E8 as usize][precomputed::H8 as usize] & b.bbs[AnyPiece as usize] == precomputed::EMPTY {
                 moves.add_move(Move::new(precomputed::E8, precomputed::G8, &Move::KING_CASTLE));
             }
             if b.gs.castling_rights.contains(CastlingFlags::BQ) &&
                legal_king_moves & precomputed::D8BB != precomputed::EMPTY &&
                king_move_mask & precomputed::C8BB != precomputed::EMPTY &&
                !self.square_attacked_non_pawn(b, precomputed::C8) &&
-               precomputed::BETWEEN_BITBOARDS[precomputed::E8 as usize][precomputed::A8 as usize] & b.bbs[Any(Neutral)] == precomputed::EMPTY {
+               precomputed::BETWEEN_BITBOARDS[precomputed::E8 as usize][precomputed::A8 as usize] & b.bbs[AnyPiece as usize] == precomputed::EMPTY {
                 moves.add_move(Move::new(precomputed::E8, precomputed::C8, &Move::QUEEN_CASTLE));
             }
         }
@@ -110,14 +110,14 @@ impl MoveGenerator {
     }
 
     fn square_attacked_non_pawn(&self, b: &Board, sq: Square) -> bool {
-           precomputed::KNIGHT_MOVES[sq as usize] & b.bbs[Knight(b.gs.opponent_color)] != 0
-        || precomputed::KING_MOVES[sq as usize]   & b.bbs[King(b.gs.opponent_color)] != 0
-        || self.get_rook_attacks(b.bbs[Any(Neutral)], sq)              & b.bbs[HVslider(b.gs.opponent_color)] != 0
-        || self.get_bishop_attacks(b.bbs[Any(Neutral)], sq)            & b.bbs[Dslider(b.gs.opponent_color)] != 0
+           precomputed::KNIGHT_MOVES[sq as usize] & b.bbs[PieceType::from_color(WKnight, b.gs.opponent_color) as usize] != 0
+        || precomputed::KING_MOVES[sq as usize]   & b.bbs[PieceType::from_color(WKing, b.gs.opponent_color) as usize] != 0
+        || self.get_rook_attacks(b.bbs[AnyPiece as usize], sq)              & b.bbs[PieceType::from_color(WHVSlider, b.gs.opponent_color) as usize] != 0
+        || self.get_bishop_attacks(b.bbs[AnyPiece as usize], sq)            & b.bbs[PieceType::from_color(WDSlider, b.gs.opponent_color) as usize] != 0
     }
 
     fn add_pawn_moves(&self, b: &Board, moves: &mut MoveList, movable: Bitboard, pin_mask_hv: Bitboard, pin_mask_d: Bitboard) {
-        let pawns = b.bbs[Pawn(b.gs.player_to_move)];
+        let pawns = b.bbs[PieceType::from_color(WPawn, b.gs.player_to_move) as usize];
         let not_hv_pinned = pawns & !pin_mask_hv;
         let not_d_pinned = pawns & !pin_mask_d;
         let not_pinned = not_d_pinned & not_hv_pinned;
@@ -132,16 +132,16 @@ impl MoveGenerator {
         // TODO: Less copying of code (inlining reverse shifting operation?)
         if b.gs.player_to_move == White {
             let not_hor_or_d_pinned = not_pinned | not_d_pinned & (pin_mask_hv >> 8);
-            let forward_empty = not_hor_or_d_pinned & (!b.bbs[Any(Neutral)] >> 8);
+            let forward_empty = not_hor_or_d_pinned & (!b.bbs[AnyPiece as usize] >> 8);
 
             let not_pinned_d1 = precomputed::NOT_A_FILE & ((only_d_pinned & (pin_mask_d >> 7)) | not_pinned);
             let not_pinned_d2 = precomputed::NOT_H_FILE & ((only_d_pinned & (pin_mask_d >> 9)) | not_pinned);
             
             can_push_single = forward_empty & (movable >> 8);
-            can_push_double = forward_empty & precomputed::SECOND_ROW & ((!b.bbs[Any(Neutral)] & movable) >> 16);
+            can_push_double = forward_empty & precomputed::SECOND_ROW & ((!b.bbs[AnyPiece as usize] & movable) >> 16);
             
-            can_take_d1 = not_pinned_d1 & ((b.bbs[Any(Black)] & movable) >> 7);
-            can_take_d2 = not_pinned_d2 & ((b.bbs[Any(Black)] & movable) >> 9);
+            can_take_d1 = not_pinned_d1 & ((b.bbs[AnyBlack as usize] & movable) >> 7);
+            can_take_d2 = not_pinned_d2 & ((b.bbs[AnyBlack as usize] & movable) >> 9);
 
             ep_take = not_pinned_d1 & (b.gs.en_passant_mask >> 7)
                     | not_pinned_d2 & (b.gs.en_passant_mask >> 9);
@@ -152,16 +152,16 @@ impl MoveGenerator {
             self.add_moves_with_function(b, moves, &mut can_take_d2, |sq| util::bitboard_from_square(sq + 9), SpecialBitsContainer::MayPromote(Move::CAPTURE));
         } else {
             let not_hor_or_d_pinned = not_pinned | not_d_pinned & (pin_mask_hv << 8);
-            let forward_empty = not_hor_or_d_pinned & (!b.bbs[Any(Neutral)] << 8);
+            let forward_empty = not_hor_or_d_pinned & (!b.bbs[AnyPiece as usize] << 8);
 
             let not_pinned_d1 = precomputed::NOT_H_FILE & ((only_d_pinned & (pin_mask_d << 7)) | not_pinned);
             let not_pinned_d2 = precomputed::NOT_A_FILE & ((only_d_pinned & (pin_mask_d << 9)) | not_pinned);
             
             can_push_single = forward_empty & (movable << 8);
-            can_push_double = forward_empty & precomputed::SEVENTH_ROW & ((!b.bbs[Any(Neutral)] & movable) << 16);
+            can_push_double = forward_empty & precomputed::SEVENTH_ROW & ((!b.bbs[AnyPiece as usize] & movable) << 16);
             
-            can_take_d1 = not_pinned_d1 & ((b.bbs[Any(White)] & movable) << 7);
-            can_take_d2 = not_pinned_d2 & ((b.bbs[Any(White)] & movable) << 9);
+            can_take_d1 = not_pinned_d1 & ((b.bbs[AnyWhite as usize] & movable) << 7);
+            can_take_d2 = not_pinned_d2 & ((b.bbs[AnyWhite as usize] & movable) << 9);
 
             ep_take = not_pinned_d1 & (b.gs.en_passant_mask << 7)
                     | not_pinned_d2 & (b.gs.en_passant_mask << 9);
@@ -183,25 +183,25 @@ impl MoveGenerator {
     }
 
     fn add_moves_of_piece_type(&self, b: &Board, moves: &mut MoveList, pt: PieceType, movable: Bitboard, blockading_pin: Bitboard, restricting_pin: Bitboard) {
-        let mut moving_pieces = b.bbs[pt] & !blockading_pin;
+        let mut moving_pieces = b.bbs[pt as usize] & !blockading_pin;
         let mut pinned_pieces = moving_pieces & restricting_pin;
         moving_pieces ^= pinned_pieces;
 
         let move_gen = |sq: Square| match pt {
-            Knight(_) => precomputed::KNIGHT_MOVES[sq as usize] & movable,
-            Bishop(_) => self.get_bishop_attacks(b.bbs[Any(Neutral)], sq) & movable,
-            Rook(_) => self.get_rook_attacks(b.bbs[Any(Neutral)], sq) & movable,
-            Queen(_) => (self.get_bishop_attacks(b.bbs[Any(Neutral)], sq)
-                       | self.get_rook_attacks(b.bbs[Any(Neutral)], sq)) & movable,
+            WKnight | BKnight => precomputed::KNIGHT_MOVES[sq as usize] & movable,
+            WBishop | BBishop => self.get_bishop_attacks(b.bbs[AnyPiece as usize], sq) & movable,
+            WRook | BRook => self.get_rook_attacks(b.bbs[AnyPiece as usize], sq) & movable,
+            WQueen | BQueen => (self.get_bishop_attacks(b.bbs[AnyPiece as usize], sq)
+                       | self.get_rook_attacks(b.bbs[AnyPiece as usize], sq)) & movable,
             _ => precomputed::EMPTY
         };
 
         let pinned_move_gen = |sq: Square| match pt {
             // Pinned knights may not move
-            Knight(_) => precomputed::EMPTY,
+            WKnight | BKnight => precomputed::EMPTY,
             // This method only covers diagonally pinned queens. HV pinned queens get added later.
-            Bishop(_) | Queen(_) => self.get_bishop_attacks(b.bbs[Any(Neutral)], sq) & movable & restricting_pin,
-            Rook(_) => self.get_rook_attacks(b.bbs[Any(Neutral)], sq) & movable & restricting_pin,
+            WBishop | BBishop | WQueen | BQueen => self.get_bishop_attacks(b.bbs[AnyPiece as usize], sq) & movable & restricting_pin,
+            WRook | BRook => self.get_rook_attacks(b.bbs[AnyPiece as usize], sq) & movable & restricting_pin,
             _ => precomputed::EMPTY
         };
 
@@ -263,23 +263,23 @@ impl MoveGenerator {
     
         // Left shift by negative integer not allowed, consider inlining with function
         if b.gs.player_to_move == White {
-            king_ban = ((b.bbs[Pawn(Black)] & precomputed::NOT_H_FILE) >> 7)
-                     | ((b.bbs[Pawn(Black)] & precomputed::NOT_A_FILE) >> 9);
-            check_mask = b.bbs[Pawn(Black)] & precomputed::WHITE_PAWN_CAPTURES[king_square as usize];
+            king_ban = ((b.bbs[BPawn as usize] & precomputed::NOT_H_FILE) >> 7)
+                     | ((b.bbs[BPawn as usize] & precomputed::NOT_A_FILE) >> 9);
+            check_mask = b.bbs[BPawn as usize] & precomputed::WHITE_PAWN_CAPTURES[king_square as usize];
         } else {
-            king_ban = ((b.bbs[Pawn(White)] & precomputed::NOT_A_FILE) << 7)
-                     | ((b.bbs[Pawn(White)] & precomputed::NOT_H_FILE) << 9);
-            check_mask = b.bbs[Pawn(White)] & precomputed::BLACK_PAWN_CAPTURES[king_square as usize];
+            king_ban = ((b.bbs[WPawn as usize] & precomputed::NOT_A_FILE) << 7)
+                     | ((b.bbs[WPawn as usize] & precomputed::NOT_H_FILE) << 9);
+            check_mask = b.bbs[WPawn as usize] & precomputed::BLACK_PAWN_CAPTURES[king_square as usize];
         };
     
-        check_mask |= precomputed::KNIGHT_MOVES[king_square as usize] & b.bbs[Knight(b.gs.opponent_color)];
+        check_mask |= precomputed::KNIGHT_MOVES[king_square as usize] & b.bbs[PieceType::from_color(WKnight, b.gs.opponent_color) as usize];
         
         let mut already_in_check = check_mask != precomputed::EMPTY;
         
-        let rook_attacks: Bitboard = self.get_rook_attacks(b.bbs[Any(Neutral)], king_square);
+        let rook_attacks: Bitboard = self.get_rook_attacks(b.bbs[AnyPiece as usize], king_square);
         for ray in precomputed::ROOK_RAYS[king_square as usize] {
 
-            let attacker = rook_attacks & ray & b.bbs[HVslider(b.gs.opponent_color)];
+            let attacker = rook_attacks & ray & b.bbs[PieceType::from_color(WHVSlider, b.gs.opponent_color) as usize];
             if attacker != precomputed::EMPTY {
                 // Consider precomputing kingban tables from king square, only XOR attacker needed instead of trailingzeros
                 king_ban |= precomputed::ROOK_MOVES[util::ls1b_from_bitboard(attacker) as usize];
@@ -295,10 +295,10 @@ impl MoveGenerator {
             }
         }
 
-        let bishop_attacks: Bitboard = self.get_bishop_attacks(b.bbs[Any(Neutral)], king_square);
+        let bishop_attacks: Bitboard = self.get_bishop_attacks(b.bbs[AnyPiece as usize], king_square);
         for ray in precomputed::BISHOP_RAYS[king_square as usize] {
 
-            let attacker = bishop_attacks & ray & b.bbs[Dslider(b.gs.opponent_color)];
+            let attacker = bishop_attacks & ray & b.bbs[PieceType::from_color(WDSlider, b.gs.opponent_color) as usize];
             if attacker != precomputed::EMPTY {
                 king_ban |= precomputed::BISHOP_MOVES[util::ls1b_from_bitboard(attacker) as usize];
 
@@ -323,7 +323,7 @@ impl MoveGenerator {
             let sniper_square: Square = util::pop_ls1b(&mut snipers);
             let ray = precomputed::BETWEEN_BITBOARDS[b.gs.playing_king_square as usize][sniper_square as usize];
 
-            if (ray & b.bbs[Any(Neutral)]).is_power_of_two() {
+            if (ray & b.bbs[AnyPiece as usize]).is_power_of_two() {
                 pin_mask |= ray | util::bitboard_from_square(sniper_square);
             }
         }
@@ -332,7 +332,7 @@ impl MoveGenerator {
 
     fn is_horizontal_ep_pinned(&self, b: &Board, taking_pawn_square: Square) -> bool {
         let changed_pieces = util::bitboard_from_square(taking_pawn_square) | util::bitboard_from_square(util::ls1b_from_bitboard(b.gs.en_passant_mask) ^ 8) | b.gs.en_passant_mask;
-        let rays = self.get_rook_attacks(b.bbs[Any(Neutral)] ^ changed_pieces, b.gs.playing_king_square);
-        rays & b.bbs[HVslider(b.gs.opponent_color)] != precomputed::EMPTY
+        let rays = self.get_rook_attacks(b.bbs[AnyPiece as usize] ^ changed_pieces, b.gs.playing_king_square);
+        rays & b.bbs[PieceType::from_color(WHVSlider, b.gs.opponent_color) as usize] != precomputed::EMPTY
     }
 }

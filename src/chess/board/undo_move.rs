@@ -1,6 +1,6 @@
 use std::mem;
 
-use super::{super::{Board, Move, PieceType, PieceType::*, Color::*, precomputed}, GameState};
+use super::{super::{Board, Move, PieceType, PieceType::*, precomputed}, GameState};
 
 const MOVE_HISTORY_CAPACITY: usize = 512;
 
@@ -51,20 +51,20 @@ impl Board {
         
         if is_promotion { // Promotion
             self.remove_piece(new_piece_type, to);
-            self.place_piece(Pawn(self.gs.player_to_move), from);
+            self.place_piece(PieceType::from_color(WPawn, self.gs.player_to_move), from);
         } else {
             self.move_piece(new_piece_type, to, from);
 
             if mv.intersects(Move::SPECIAL1) { // only set when promoting or castling, so must be castle
                 match to {
-                    precomputed::G1 => self.move_piece(Rook(White), precomputed::F1, precomputed::H1),
-                    precomputed::C1 => self.move_piece(Rook(White), precomputed::D1, precomputed::A1),
-                    precomputed::G8 => self.move_piece(Rook(Black), precomputed::F8, precomputed::H8),
-                    precomputed::C8 => self.move_piece(Rook(Black), precomputed::D8, precomputed::A8),
+                    precomputed::G1 => self.move_piece(WRook, precomputed::F1, precomputed::H1),
+                    precomputed::C1 => self.move_piece(WRook, precomputed::D1, precomputed::A1),
+                    precomputed::G8 => self.move_piece(BRook, precomputed::F8, precomputed::H8),
+                    precomputed::C8 => self.move_piece(BRook, precomputed::D8, precomputed::A8),
                     sq => panic!("Invalid castling move to {}", sq)
                 }
             } else if mv.is_ep() {
-                self.place_piece(Pawn(self.gs.opponent_color), to ^ 8);
+                self.place_piece(PieceType::from_color(WPawn, self.gs.opponent_color), to ^ 8);
             }
         }
 

@@ -1,27 +1,6 @@
 use crate::chess::precomputed;
 
-use super::{Square, Bitboard, PieceType::{self, *}, Color::*};
-
-pub const fn get_piece_name(pt: Option<PieceType>) -> char {
-    match pt {
-        Some(pt) => match pt {
-            Pawn(White)     => 'P',
-            Knight(White)   => 'N',
-            Bishop(White)   => 'B',
-            Rook(White)     => 'R',
-            Queen(White)    => 'Q',
-            King(White)     => 'K',
-            Pawn(Black)     => 'p',
-            Knight(Black)   => 'n',
-            Bishop(Black)   => 'b',
-            Rook(Black)     => 'r',
-            Queen(Black)    => 'q',
-            King(Black)     => 'k',
-            _ => panic!("Not a valid piece")
-        }
-        None => '.'
-    }
-}
+use super::{Square, Bitboard};
 
 pub fn print_bb(bb: Bitboard) {
     println!(

@@ -67,10 +67,10 @@ impl Move {
     }
     pub fn get_promotion_piece(&self, color: Color) -> PieceType {
         match self.intersection(Self::QUEEN_PROMOTION) {
-            Self::QUEEN_PROMOTION => Queen(color),
-            Self::KNIGHT_PROMOTION => Knight(color),
-            Self::ROOK_PROMOTION => Rook(color),
-            Self::BISHOP_PROMOTION => Bishop(color),
+            Self::QUEEN_PROMOTION => PieceType::from_color(WQueen, color),
+            Self::KNIGHT_PROMOTION => PieceType::from_color(WKnight, color),
+            Self::ROOK_PROMOTION => PieceType::from_color(WRook, color),
+            Self::BISHOP_PROMOTION => PieceType::from_color(WBishop, color),
             _ => panic!("Not a valid promotion move: {}", self)
         }
     }

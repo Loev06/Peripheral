@@ -1,5 +1,7 @@
 use std::error::Error;
 
+use crate::chess::PieceType;
+
 use super::{Board, super::{ Color::*, PieceType::*, precomputed, Square, util, CastlingFlags}, GameState};
 
 struct FENdata<'a> {
@@ -42,15 +44,15 @@ impl Board {
     
                 let color = if pt.is_uppercase() {White} else {Black};
     
-                let pt = match pt.to_ascii_uppercase() {
-                    'P' => Pawn(color),
-                    'N' => Knight(color),
-                    'B' => Bishop(color),
-                    'R' => Rook(color),
-                    'Q' => Queen(color),
-                    'K' => King(color),
+                let pt = PieceType::from_color(match pt.to_ascii_uppercase() {
+                    'P' => WPawn,
+                    'N' => WKnight,
+                    'B' => WBishop,
+                    'R' => WRook,
+                    'Q' => WQueen,
+                    'K' => WKing,
                     p => return Err(format!("Not a valid piece: {p}").into())
-                };
+                }, color);
     
                 b.place_piece(pt, util::square_from_coord(col, 7 - row));
     
@@ -62,6 +64,7 @@ impl Board {
     
         gs.player_to_move = if fen_data.color == 'w' {White} else {Black};
         gs.opponent_color = -gs.player_to_move;
+        gs.pt_offset = if gs.player_to_move == White {WPawn} else {BPawn};
     
         for c in fen_data.castling.chars() {
             gs.castling_rights.insert(match c {
@@ -81,8 +84,8 @@ impl Board {
         // TODO: Add parsing for rest of the FEN data
         
         b.update_board_data();
-        gs.playing_king_square = util::ls1b_from_bitboard(b.bbs[King(gs.player_to_move)]) as Square;
-        gs.opponent_king_square = util::ls1b_from_bitboard(b.bbs[King(gs.opponent_color)]) as Square;
+        gs.playing_king_square = util::ls1b_from_bitboard(b.bbs[WKing + gs.pt_offset]) as Square;
+        gs.opponent_king_square = util::ls1b_from_bitboard(b.bbs[BKing - gs.pt_offset]) as Square;
     
         b.gs = gs;
 

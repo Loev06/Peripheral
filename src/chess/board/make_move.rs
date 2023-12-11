@@ -1,4 +1,4 @@
-use super::{Board, super::Move, PieceType::*, util, precomputed, undo_move::GSHistoryEntry};
+use super::{Board, super::Move, PieceType, PieceType::*, util, precomputed, undo_move::GSHistoryEntry};
 
 impl Board {
     pub fn make_move(&mut self, mv: &Move) {
@@ -24,20 +24,21 @@ impl Board {
             self.remove_piece(pt, to);
         } else {
             match new_piece_type {
-                Pawn(_) => {
+                WPawn | BPawn => {
                     if mv.is_ep() {
-                        self.remove_piece(Pawn(self.gs.opponent_color), to ^ 8); // En-passant
+                        self.remove_piece(PieceType::from_color(WPawn, self.gs.opponent_color), to ^ 8); // En-passant
                     } else if mv.intersects(Move::DOUBLE_PAWN_PUSH) {
                         self.gs.en_passant_mask = util::bitboard_from_square(to ^ 8) // Double pawn push
                     }
                 },
-                King(_) => {
+                WKing | BKing => {
+                    let rook_type = PieceType::from_color(WRook, self.gs.player_to_move);
                     if mv.contains(Move::QUEEN_CASTLE) {
-                        self.remove_piece(Rook(self.gs.player_to_move), from - 4); // Queen castle
-                        self.place_piece(Rook(self.gs.player_to_move), from - 1);
+                        self.remove_piece(rook_type, from - 4); // Queen castle
+                        self.place_piece(rook_type, from - 1);
                     } else if mv.contains(Move::KING_CASTLE) {
-                        self.remove_piece(Rook(self.gs.player_to_move), from + 3); // King castle
-                        self.place_piece(Rook(self.gs.player_to_move), from + 1);
+                        self.remove_piece(rook_type, from + 3); // King castle
+                        self.place_piece(rook_type, from + 1);
                     }
                 },
                 _ => ()
