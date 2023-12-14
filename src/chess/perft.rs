@@ -19,8 +19,8 @@ impl PerftTTEntry {
 }
 
 pub struct Perft {
-    pub board: Board,
-    pub mg: MoveGenerator,
+    board: Board,
+    mg: MoveGenerator,
     
     tt: Vec<PerftTTEntry>,
     hits: u64,
@@ -66,7 +66,7 @@ impl Perft {
         debug_assert!(self.board.key == self.board.make_key());
 
         let mut moves = MoveList::new();
-        self.mg.generate_legal_moves(&self.board, &mut moves);
+        self.mg.generate_legal_moves(&mut self.board, &mut moves);
         
         if debug {
             println!("{}", self.board);
@@ -104,7 +104,7 @@ impl Perft {
         }
 
         let mut moves = MoveList::new();
-        self.mg.generate_legal_moves(&self.board, &mut moves);
+        self.mg.generate_legal_moves(&mut self.board, &mut moves);
         
         if debug {
             println!("{}", self.board);

@@ -1,6 +1,11 @@
 use std::mem;
 
-use super::{super::{Board, Move, PieceType, PieceType::*, precomputed}, GameState, zobrist::*, util};
+use super::{
+    GameState, zobrist::*,
+    super::{
+        Board, Move, PieceType, PieceType::*, precomputed, util
+    }
+};
 
 const MOVE_HISTORY_CAPACITY: usize = 512;
 

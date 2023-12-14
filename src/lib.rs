@@ -1,21 +1,26 @@
 use std::error::Error;
 use serde::{Deserialize, Serialize};
 
-pub use chess::{MoveGenerator, Board, MoveList, Perft, util, PieceType::*, Color::*};
+pub use chess::{MoveGenerator, Board, MoveList, Perft, ChessEngine, util, PieceType::*, Color::*};
 
 #[allow(dead_code)]
 mod chess;
 
-const FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+const FEN: &str = "4r3/2P3R1/R1N2k1P/5Np1/K1p1p3/1pr5/3P4/Bn3Q2 w - - 0 0";
 
 pub fn run_bot() -> Result<(), Box<dyn Error>> {
     println!("Main bot function");
     
     let board = Board::try_from_fen(FEN)?;
-    let mut perft = Perft::new(board);
+    println!("{}", board);
 
-    println!("{}", perft.board);
-    perft.verb_perft(7, false, false);
+    let mut chess_engine = ChessEngine::new();
+    let res = chess_engine.search(board);
+    println!("bestmove {} ({})", res.0, res.1);
+
+    // let mut perft = Perft::new(board);
+
+    // perft.verb_perft(6, true, false);
 
     Ok(())
 }

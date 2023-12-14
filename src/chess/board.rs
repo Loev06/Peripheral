@@ -43,6 +43,7 @@ pub struct GameState {
     pub pt_offset: PieceType,
 
     pub playing_king_square: Square,
+    pub is_in_check: bool,
 
     pub castling_rights: CastlingFlags,
     pub en_passant_mask: Bitboard,
@@ -56,6 +57,7 @@ impl GameState {
             pt_offset: WPawn,
 
             playing_king_square: 64,
+            is_in_check: false,
 
             castling_rights: CastlingFlags::empty(),
             en_passant_mask: precomputed::EMPTY,
@@ -64,10 +66,9 @@ impl GameState {
 
     fn switch_sides(&mut self) {
         (self.player_to_move, self.opponent_color) = (self.opponent_color, self.player_to_move);
-        self.pt_offset = match self.pt_offset {
-            WPawn => BPawn,
-            BPawn => WPawn,
-            pt => panic!("Not a valid pt_offset: {pt}")
+        self.pt_offset = match self.player_to_move {
+            White => WPawn,
+            Black => BPawn
         };
     }
 }
@@ -92,8 +93,9 @@ pub struct Board {
     pub bbs: [u64; 19],
     pub piece_list: [Option<PieceType>; 64],
     pub gs: GameState,
-    pub gs_history: GSHistory,
     pub key: u64,
+
+    gs_history: GSHistory
 }
 
 impl Board {
@@ -102,8 +104,9 @@ impl Board {
             bbs: [0; 12 + 7],
             piece_list: [None; 64],
             gs: GameState::empty(),
+            key: 0,
+
             gs_history: GSHistory::new(),
-            key: 0
         }
     }
 

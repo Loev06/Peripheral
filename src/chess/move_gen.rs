@@ -25,10 +25,11 @@ impl MoveGenerator {
         mg
     }
 
-    pub fn generate_legal_moves(&self, b: &Board, moves: &mut MoveList) {
-        moves.reset_count();
-
+    pub fn generate_legal_moves(&self, b: &mut Board, moves: &mut MoveList) {
         let (check_mask, king_ban) = self.generate_check_mask_and_king_ban(b);
+
+        b.gs.is_in_check = check_mask != precomputed::FULL;
+
         let opponent_or_empty = !b.bbs[PieceType::from_color(AnyWhite, b.gs.player_to_move) as usize];
         
         let king_move_mask = opponent_or_empty & !king_ban;

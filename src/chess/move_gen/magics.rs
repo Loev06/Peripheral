@@ -1,4 +1,9 @@
-use super::{super::{precomputed, Bitboard, Square, util}, MoveGenerator};
+use super::{
+    MoveGenerator,
+    super::{
+        precomputed, Bitboard, Square, util
+    }
+};
 
 // Thanks to GunshipPenguin for these magic numbers
 // https://github.com/GunshipPenguin/shallow-blue/blob/c6d7e9615514a86533a9e0ffddfc96e058fc9cfd/src/attacks.h

@@ -25,11 +25,6 @@ impl MoveList {
         self.moves[self.count] = mv;
         self.count += 1;
     }
-
-    pub fn reset_count(&mut self) {
-        self.count = 0;
-        self.idx = 0;
-    }
 }
 
 impl Iterator for MoveList {

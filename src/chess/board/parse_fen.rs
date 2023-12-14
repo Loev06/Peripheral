@@ -2,7 +2,12 @@ use std::error::Error;
 
 use crate::chess::PieceType;
 
-use super::{Board, super::{ Color::*, PieceType::*, precomputed, Square, util, CastlingFlags}, GameState};
+use super::{
+    Board, GameState,
+    super::{
+        Color::*, PieceType::*, precomputed, Square, util, CastlingFlags
+    }
+};
 
 struct FENdata<'a> {
     rows: Vec<&'a str>,

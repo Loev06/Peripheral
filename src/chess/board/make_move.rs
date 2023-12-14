@@ -1,4 +1,10 @@
-use super::{Board, super::Move, PieceType, PieceType::*, util, precomputed, undo_move::GSHistoryEntry, zobrist::*};
+use super::{
+    Board,
+    undo_move::GSHistoryEntry, 
+    super::{
+        Move, PieceType, PieceType::*, util, precomputed, zobrist::*
+    }
+};
 
 impl Board {
     pub fn make_move(&mut self, mv: &Move) {
