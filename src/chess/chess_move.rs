@@ -1,5 +1,7 @@
-use std::fmt;
+use std::{fmt, error::Error};
 use bitflags::bitflags;
+
+use crate::Board;
 
 use super::{Square, precomputed, Color, PieceType::{self, *}};
 
@@ -83,6 +85,43 @@ impl Move {
     pub fn is_promotion(&self) -> bool {
         self.intersects(Move::PROMOTION)
     }
+
+    pub fn try_from_str(name: &str, board: &Board) -> Result<Self, Box<dyn Error>> {
+        let from = precomputed::SQUARE_NAMES.iter().position(|i| *i == &name[..2]).ok_or("Invalid from square")?;
+        let to = precomputed::SQUARE_NAMES.iter().position(|i| *i == &name[2..4]).ok_or("Invalid to square")?;
+
+        let mut mv = Self::new(from as Square, to as Square, &Self::empty());
+
+        let diff = to as isize - from as isize;
+
+        match board.piece_list[from] {
+            Some(WPawn) | Some(BPawn) => {
+                if diff.abs() == 16 {
+                    mv.insert(Self::DOUBLE_PAWN_PUSH);
+                } else if diff.abs() != 8 && board.piece_list[to] == None {
+                    mv.insert(Self::EP_CAPTURE);
+                }
+            },
+            Some(WKing) | Some(BKing) => {
+                match diff {
+                     2 => mv.insert(Self::KING_CASTLE),
+                    -2 => mv.insert(Self::QUEEN_CASTLE),
+                    _ => ()
+                }
+            },
+            _ => ()
+        }
+
+        match name.chars().nth(4) {
+            Some('q') => mv.insert(Self::QUEEN_PROMOTION),
+            Some('r') => mv.insert(Self::ROOK_PROMOTION),
+            Some('b') => mv.insert(Self::BISHOP_PROMOTION),
+            Some('n') => mv.insert(Self::KNIGHT_PROMOTION),
+            _ => ()
+        }
+
+        Ok(mv)
+    }
 }
 
 impl fmt::Debug for Move {
@@ -101,7 +140,13 @@ impl fmt::Display for Move {
         f.write_fmt(format_args!("{}{}{}",
             precomputed::SQUARE_NAMES[self.intersection(Move::FROM).bits() as usize],
             precomputed::SQUARE_NAMES[self.intersection(Move::TO).bits() as usize >> 6],
-            SPECIAL_MOVE_NAMES[self.intersection(Move::SPECIAL_BITS).bits() as usize >> 12])
-        )
+            match self.intersection(Move::SPECIAL_BITS) {
+                Self::QUEEN_PROMOTION   => "q",
+                Self::ROOK_PROMOTION    => "r",
+                Self::BISHOP_PROMOTION  => "b",
+                Self::KNIGHT_PROMOTION  => "n",
+                _ => ""
+            }
+        ))
     }
 }

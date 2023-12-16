@@ -1,7 +1,12 @@
+pub const NAME: &str = "Rust Chess Engine";
+pub const VERSION: &str = "0.1";
+pub const AUTHOR: &str = "Loev06";
+pub const DATE: &str = "2023-12-14";
+
 use std::error::Error;
 use serde::{Deserialize, Serialize};
 
-pub use chess::{MoveGenerator, Board, MoveList, Perft, ChessEngine, util, PieceType::*, Color::*};
+pub use chess::{MoveGenerator, Board, MoveList, Perft, ChessEngine, util, PieceType::*, Color::*, Move};
 
 #[allow(dead_code)]
 mod chess;
@@ -15,7 +20,7 @@ pub fn run_bot() -> Result<(), Box<dyn Error>> {
     println!("{}", board);
 
     let mut chess_engine = ChessEngine::new();
-    let res = chess_engine.search(board);
+    let res = chess_engine.search(board, 6);
     println!("bestmove {} ({})", res.0, res.1);
 
     // let mut perft = Perft::new(board);

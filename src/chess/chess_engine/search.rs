@@ -9,9 +9,9 @@ use super::{
 };
 
 impl ChessEngine {
-    pub fn search(&mut self, board: Board) -> (Move, Score) {
+    pub fn search(&mut self, board: Board, depth: u8) -> (Move, Score) {
         self.board = board;
-        self.root_negamax(4)
+        self.root_negamax(depth)
     }
 
     fn root_negamax(&mut self, depth: u8) -> (Move, Score) {

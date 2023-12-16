@@ -77,7 +77,7 @@ impl Display for GameState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(format!(
             "curr player: {}\nking square: {}\ncastling: {}\nep: {}",
-            if self.player_to_move == White {'w'} else {'b'},
+            self.player_to_move,
             precomputed::SQUARE_NAMES[self.playing_king_square as usize],
             self.castling_rights,
             if self.en_passant_mask == precomputed::EMPTY {
@@ -174,12 +174,53 @@ impl Board {
 
         key
     }
+
+    pub fn get_fen(&self) -> String {
+        format!("{} {} {} {} {} {}",
+            (0..8).rev().map(|y| {
+                let mut empty_count = 0;
+                format!("{}{}",
+                    (0..8).map(|x| {
+                        match self.piece_list[util::square_from_coord(x, y) as usize] {
+                            Some(pt) => {
+                                let old_count = empty_count;
+                                empty_count = 0;
+                                format!("{}{}",
+                                    if old_count > 0 {old_count.to_string()} else {String::new()},
+                                    pt.to_string()
+                                )
+                            },
+                            None => {
+                                empty_count += 1;
+                                String::from("")
+                            }
+                        }
+                    })
+                    .collect::<Vec<String>>()
+                    .join("")
+                    .to_string(),
+                    if empty_count > 0 {empty_count.to_string()} else {String::new()}
+                )
+            })
+            .collect::<Vec<String>>()
+            .join("/"),
+            self.gs.player_to_move,
+            self.gs.castling_rights,
+            if self.gs.en_passant_mask == precomputed::EMPTY {
+                "-"
+            } else {
+                precomputed::SQUARE_NAMES[util::ls1b_from_bitboard(self.gs.en_passant_mask) as usize]
+            },
+            0,
+            0
+        )
+    }
 }
 
 impl Display for Board {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(format!(
-            "\n{}\nkey: {:X}\n{}\n",
+            "\n{}\nkey: {:X}\n{}\n{}\n",
             (0..8).rev().map(|y| {
                 (0..8).map(|x| {
                     match self.piece_list[util::square_from_coord(x, y) as usize] {
@@ -194,6 +235,7 @@ impl Display for Board {
             .fold(String::from("+---+---+---+---+---+---+---+---+\n"), |a, b| a + &b + "\n+---+---+---+---+---+---+---+---+\n")
             .trim_end(),
             self.key,
+            self.get_fen(),
             self.gs
         ).as_str())
     }
