@@ -74,7 +74,7 @@ impl Perft {
         }
 
         if depth <= 1 {
-            moves.count as u64
+            *moves.get_count() as u64
         } else {
             moves.into_iter().map(|mv| {
                 self.board.make_move(&mv);
@@ -112,7 +112,7 @@ impl Perft {
         }
 
         let sum = if depth <= 1 {
-            moves.count as u64
+            *moves.get_count() as u64
         } else {
             moves.into_iter().map(|mv| {
                 self.board.make_move(&mv);

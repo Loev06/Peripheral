@@ -8,6 +8,10 @@ pub use board::zobrist;
 mod chess_move;
 pub use chess_move::Move;
 
+mod grade;
+pub use grade::Grade;
+pub use grade::grade;
+
 mod castling_flags;
 pub use castling_flags::CastlingFlags;
 

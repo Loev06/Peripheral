@@ -3,7 +3,9 @@
 A chess engine in development. I'm learning Rust as I go, so any feedback is appreciated.
 
 Search features:
-- plain alpha-beta negamax
+- alpha-beta negamax
+- move ordering:
+    - MVV-LVA
 
 Eval features:
 - Piece values

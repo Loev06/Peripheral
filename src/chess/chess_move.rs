@@ -85,6 +85,9 @@ impl Move {
     pub fn is_promotion(&self) -> bool {
         self.intersects(Move::PROMOTION)
     }
+    pub fn is_capture(&self) -> bool {
+        self.intersects(Move::CAPTURE)
+    }
 
     pub fn try_from_str(name: &str, board: &Board) -> Result<Self, Box<dyn Error>> {
         let from = precomputed::SQUARE_NAMES.iter().position(|i| *i == &name[..2]).ok_or("Invalid from square")?;

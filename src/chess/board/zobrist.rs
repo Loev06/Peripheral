@@ -15,7 +15,7 @@ const fn rand(seed: u64) -> (u64, u64) {
     (seed.overflowing_mul(2685821657736338717u64).0, seed)
 }
 
-const fn precompute_piece_square<'a>() -> ([[u64; 64]; 12], u64) {
+const fn precompute_piece_square() -> ([[u64; 64]; 12], u64) {
     let mut seed = 1070372;
     let mut vals = [[0; 64]; 12];
 
@@ -32,7 +32,7 @@ const fn precompute_piece_square<'a>() -> ([[u64; 64]; 12], u64) {
     (vals, seed)
 }
 
-const fn precompute_ep_square<'a>() -> ([u64; 65], u64) {
+const fn precompute_ep_square() -> ([u64; 65], u64) {
     let mut seed = precompute_piece_square().1;
     let mut vals = [0; 65];
 
@@ -52,7 +52,7 @@ const fn precompute_ep_square<'a>() -> ([u64; 65], u64) {
     (vals, seed)
 }
 
-const fn precompute_castling<'a>() -> ([u64; 16], u64) {
+const fn precompute_castling() -> ([u64; 16], u64) {
     let mut seed = precompute_ep_square().1;
     let mut vals = [0; 16];
 
@@ -65,7 +65,7 @@ const fn precompute_castling<'a>() -> ([u64; 16], u64) {
     (vals, seed)
 }
 
-const fn precompute_black_to_move<'a>() -> (u64, u64) {
+const fn precompute_black_to_move() -> (u64, u64) {
     let seed = precompute_ep_square().1;
     rand(seed)
 }
