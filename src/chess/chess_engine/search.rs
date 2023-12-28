@@ -1,13 +1,12 @@
 use super::{
     ChessEngine,
     super::{
-        Board, Move, Score, MIN_SCORE, CHECKMATE_SCORE, Eval, MoveList, grade
+        Move, Score, MIN_SCORE, CHECKMATE_SCORE, Eval, MoveList, grade
     }
 };
 
 impl ChessEngine {
-    pub fn search(&mut self, board: Board, depth: u8) -> (Move, Score) {
-        self.board = board;
+    pub fn search(&mut self, depth: u8) -> (Move, Score) {
         self.root_negamax(depth)
     }
 
@@ -39,15 +38,15 @@ impl ChessEngine {
     }
 
     fn negamax(&mut self, mut alpha: Score, beta: Score, depth: u8) -> Score {
-        if depth <= 0 {
-            return Eval::eval(&self.board) * self.board.gs.player_to_move as Score;
+        if depth == 0 {
+            return Eval::eval(&self.board, false) * self.board.gs.player_to_move as Score;
         }
 
         let mut moves = MoveList::new();
         self.mg.generate_legal_moves(&mut self.board, &mut moves);
 
         if *moves.get_count() == 0 {
-            return if self.board.gs.is_in_check {-CHECKMATE_SCORE - depth as i16} else {0};
+            return if self.board.gs.is_in_check {-CHECKMATE_SCORE - depth as Score} else {0};
         }
         
         moves.grade_moves_with_function(grade, &self.board);

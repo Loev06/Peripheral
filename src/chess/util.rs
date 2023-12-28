@@ -57,3 +57,6 @@ pub const fn is_out_of_bounds(x: isize, y: isize) -> bool {
     x < 0 || x >= 8 || y < 0 || y >= 8
 }
 
+pub fn piece_name_from_usize(pt: usize) -> char {
+    *"PNBRQKpnbrqk".as_bytes().get(pt).expect(&format!("Not a valid piece: {}", pt)) as char
+}

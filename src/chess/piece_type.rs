@@ -1,4 +1,6 @@
-use std::{ops::{Neg, Add, Sub}, fmt::Display};
+use std::{ops::{Neg, Add, Sub}, fmt::{Display, Write}};
+
+use crate::util;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PieceType {
@@ -66,21 +68,7 @@ impl Sub for PieceType {
 
 impl Display for PieceType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match *self {
-            PieceType::WPawn    => "P",
-            PieceType::WKnight  => "N",
-            PieceType::WBishop  => "B",
-            PieceType::WRook    => "R",
-            PieceType::WQueen   => "Q",
-            PieceType::WKing    => "K",
-            PieceType::BPawn    => "p",
-            PieceType::BKnight  => "n",
-            PieceType::BBishop  => "b",
-            PieceType::BRook    => "r",
-            PieceType::BQueen   => "q",
-            PieceType::BKing    => "k",
-            pt => panic!("Not a valid PieceType: {}", pt as usize)
-        })
+        f.write_char(util::piece_name_from_usize(*self as usize))
     }
 }
 

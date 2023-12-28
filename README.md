@@ -8,7 +8,7 @@ Search features:
     - MVV-LVA
 
 Eval features:
-- Piece values
+- PeSTO eval
 
 # UCI
 
