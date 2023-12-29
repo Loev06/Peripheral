@@ -51,10 +51,10 @@ impl MoveList {
         self.count += 1;
     }
 
-    pub fn grade_moves_with_function<F>(&mut self, grading_function: F, board: &Board)
-        where 
-            F: Fn(Move, &Board) -> Grade
-        {
+    fn grade_moves_with_function<F>(&mut self, grading_function: F, board: &Board)
+    where 
+        F: Fn(Move, &Board) -> Grade
+    {
         // The array is initialized until at least self.count - 1 and self.count < MAX_MOVE_COUNT,
         // so assume_init_mut and get_unchecked_mut are not undefined behaviour
         for i in 0..self.count {
@@ -63,7 +63,11 @@ impl MoveList {
         }
     }
 
-    pub fn sort(self) -> SortingMoveList {
+    pub fn sort_with_function<F>(mut self, grading_function: F, board: &Board) -> SortingMoveList
+    where 
+        F: Fn(Move, &Board) -> Grade
+    {
+        self.grade_moves_with_function(grading_function, board);
         SortingMoveList::new(self)
     }
 }

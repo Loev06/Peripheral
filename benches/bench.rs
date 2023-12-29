@@ -5,7 +5,7 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use bot::{self, MoveGenerator, Board, MoveList, Perft, ChessEngine};
 
 fn move_gen(b: &mut Board, mg: &MoveGenerator) {
-    mg.generate_legal_moves(b, &mut MoveList::new());
+    mg.generate_legal_moves(b, &mut MoveList::new(), false);
 }
 
 fn run_perft(perft: &mut Perft, depth: u8) {
@@ -30,8 +30,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     
     
     c.bench_function("Search depth 6", |b| b.iter(|| run_search(black_box(&mut engine), black_box(6))));
-    c.bench_function("Search depth 7", |b| b.iter(|| run_search(black_box(&mut engine), black_box(7))));
-    c.bench_function("Search depth 8", |b| b.iter(|| run_search(black_box(&mut engine), black_box(8))));
+    // c.bench_function("Search depth 7", |b| b.iter(|| run_search(black_box(&mut engine), black_box(7))));
+    // c.bench_function("Search depth 8", |b| b.iter(|| run_search(black_box(&mut engine), black_box(8))));
     
     c.bench_function("Perft 6 startpos", |b| b.iter(|| run_perft(black_box(&mut perft), black_box(6))));
 

@@ -6,7 +6,8 @@ use piece_square::{MG_PIECE_SQUARE_TABLES, EG_PIECE_SQUARE_TABLES, GAME_PHASE_IN
 pub struct Eval;
 
 impl Eval {
-    pub fn eval(board: &Board, verbose: bool) -> Score {
+    // #[inline(always)]
+    pub fn eval(board: &Board) -> Score {
         let mut mg = 0;
         let mut eg = 0;
         let mut mg_game_phase = 0;
@@ -31,9 +32,9 @@ impl Eval {
             mg_game_phase = MAX_GAME_PHASE
         }
         let eg_game_phase = MAX_GAME_PHASE - mg_game_phase;
-        if verbose {
-            println!("MG: {} | EG: {} | phase: {}/{}", mg, eg, mg_game_phase, MAX_GAME_PHASE);
-        }
+        // if verbose {
+        //     println!("MG: {} | EG: {} | phase: {}/{}", mg, eg, mg_game_phase, MAX_GAME_PHASE);
+        // }
         (mg_game_phase * mg + eg_game_phase * eg) / MAX_GAME_PHASE
     }
 }
