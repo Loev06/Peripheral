@@ -41,4 +41,4 @@ pub const CHECKMATE_SCORE: Score = (MAX_SCORE - 100) / 100 * 100;
 
 pub type Square = u8;
 pub type Bitboard = u64;
-pub type Score = i32;
+pub type Score = i16;

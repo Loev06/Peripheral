@@ -143,7 +143,7 @@ impl fmt::Display for Move {
         f.write_fmt(format_args!("{}{}{}",
             precomputed::SQUARE_NAMES[self.intersection(Move::FROM).bits() as usize],
             precomputed::SQUARE_NAMES[self.intersection(Move::TO).bits() as usize >> 6],
-            match self.intersection(Move::SPECIAL_BITS) {
+            match self.intersection(Move::QUEEN_PROMOTION) { // intersect with promotion bits
                 Self::QUEEN_PROMOTION   => "q",
                 Self::ROOK_PROMOTION    => "r",
                 Self::BISHOP_PROMOTION  => "b",

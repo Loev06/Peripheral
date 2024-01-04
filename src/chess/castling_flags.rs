@@ -19,7 +19,7 @@ bitflags! {
 }
 
 impl CastlingFlags {
-    pub fn new(data: u8) -> CastlingFlags{
+    pub fn new(data: u8) -> CastlingFlags {
         Self(data.into())
     }
 

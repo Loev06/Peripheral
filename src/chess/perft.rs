@@ -62,21 +62,26 @@ impl Perft {
         sum
     }
     
+    #[inline(always)]
     pub fn perft(&mut self, depth: u8, root: bool, debug: bool) -> u64 {
         debug_assert!(self.board.key == self.board.make_key());
 
         let mut moves = MoveList::new();
         self.mg.generate_legal_moves(&mut self.board, &mut moves, false);
         
-        if debug {
-            println!("{}", self.board);
-            dbg!(&moves);
-        }
+        // if debug {
+        //     println!("{}", self.board);
+        //     dbg!(&moves);
+        // }
 
         if depth <= 1 {
             *moves.get_count() as u64
         } else {
             moves.into_iter().map(|mv| {
+                // if debug {
+                //     dbg!(mv);
+                // }
+
                 self.board.make_move(&mv);
                 let count = self.perft(depth - 1, false, debug);
                 self.board.undo_move(&mv);
@@ -90,6 +95,7 @@ impl Perft {
         }
     }
 
+    #[inline(always)]
     pub fn hash_perft(&mut self, depth: u8, root: bool, debug: bool) -> u64 {
         debug_assert!(self.board.key == self.board.make_key());
         let idx = (self.board.key & PERFT_TT_MASK) as usize ^ depth as usize;
@@ -106,10 +112,10 @@ impl Perft {
         let mut moves = MoveList::new();
         self.mg.generate_legal_moves(&mut self.board, &mut moves, false);
         
-        if debug {
-            println!("{}", self.board);
-            dbg!(&moves);
-        }
+        // if debug {
+        //     println!("{}", self.board);
+        //     dbg!(&moves);
+        // }
 
         let sum = if depth <= 1 {
             *moves.get_count() as u64

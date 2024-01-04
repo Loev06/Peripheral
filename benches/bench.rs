@@ -13,6 +13,7 @@ fn run_perft(perft: &mut Perft, depth: u8) {
 }
 
 fn run_search(engine: &mut ChessEngine, depth: u8) {
+    engine.reset_table();
     engine.search(depth);
 }
 
@@ -29,7 +30,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut board_castling = Board::try_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1").expect("Incorrect fen");
     
     
-    c.bench_function("Search depth 6", |b| b.iter(|| run_search(black_box(&mut engine), black_box(6))));
+    c.bench_function("tt_init_overhead", |b| b.iter_with_large_drop(|| engine.reset_table()));
+    c.bench_function("Search depth 6", |b| b.iter_with_large_drop(|| run_search(black_box(&mut engine), black_box(6))));
     // c.bench_function("Search depth 7", |b| b.iter(|| run_search(black_box(&mut engine), black_box(7))));
     // c.bench_function("Search depth 8", |b| b.iter(|| run_search(black_box(&mut engine), black_box(8))));
     

@@ -1,9 +1,8 @@
 use super::super::Score;
-
 pub const MG_PIECE_SQUARE_TABLES: [[Score; 64]; 12] = generate_pqts(UNSIGNED_MG_PQTS, MG_PIECE_VALUES);
 pub const EG_PIECE_SQUARE_TABLES: [[Score; 64]; 12] = generate_pqts(UNSIGNED_EG_PQTS, EG_PIECE_VALUES);
-pub const GAME_PHASE_INCREMENT: [Score; 12] = [0, 1, 1, 2, 4, 0, 0, 1, 1, 2, 4, 0];
-pub const MAX_GAME_PHASE: Score = GAME_PHASE_INCREMENT[0] * 16 // pawns
+pub const GAME_PHASE_INCREMENT: [i32; 12] = [0, 1, 1, 2, 4, 0, 0, 1, 1, 2, 4, 0];
+pub const MAX_GAME_PHASE: i32 = GAME_PHASE_INCREMENT[0] * 16 // pawns
                              + GAME_PHASE_INCREMENT[1] * 4  // knights
                              + GAME_PHASE_INCREMENT[2] * 4  // bishops
                              + GAME_PHASE_INCREMENT[3] * 4  // rooks

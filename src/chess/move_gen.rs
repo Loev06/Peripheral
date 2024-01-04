@@ -133,18 +133,18 @@ impl MoveGenerator {
         let not_d_pinned = pawns & !pin_mask_d;
         let not_pinned = not_d_pinned & not_hv_pinned;
         let only_d_pinned = not_hv_pinned & pin_mask_d;
-
+        
         let mut can_push_single: Bitboard;
         let mut can_push_double: Bitboard;
         let mut can_take_d1: Bitboard;
         let mut can_take_d2: Bitboard;
         let mut ep_take: Bitboard;
-
+        
         // TODO: Less copying of code (inlining reverse shifting operation?)
         if b.gs.player_to_move == White {
             let not_hor_or_d_pinned = not_pinned | not_d_pinned & (pin_mask_hv >> 8);
             let forward_empty = not_hor_or_d_pinned & (!b.bbs[AnyPiece as usize] >> 8);
-
+            
             let not_pinned_d1 = precomputed::NOT_A_FILE & ((only_d_pinned & (pin_mask_d >> 7)) | not_pinned);
             let not_pinned_d2 = precomputed::NOT_H_FILE & ((only_d_pinned & (pin_mask_d >> 9)) | not_pinned);
             
@@ -153,10 +153,11 @@ impl MoveGenerator {
             
             can_take_d1 = not_pinned_d1 & ((b.bbs[AnyBlack as usize] & movable) >> 7);
             can_take_d2 = not_pinned_d2 & ((b.bbs[AnyBlack as usize] & movable) >> 9);
-
-            ep_take = not_pinned_d1 & (b.gs.en_passant_mask >> 7)
-                    | not_pinned_d2 & (b.gs.en_passant_mask >> 9);
-
+            
+            let ep_mask = b.gs.en_passant_mask & (movable << 8);
+            ep_take = not_pinned_d1 & (ep_mask >> 7)
+                    | not_pinned_d2 & (ep_mask >> 9);
+            
             self.add_moves_with_function(b, moves, &mut can_push_single, |sq| util::bitboard_from_square(sq + 8), SpecialBitsContainer::MayPromote(Move::empty()));
             self.add_moves_with_function(b, moves, &mut can_push_double, |sq| util::bitboard_from_square(sq + 16), SpecialBitsContainer::ExactMoveBits(Move::DOUBLE_PAWN_PUSH));
             self.add_moves_with_function(b, moves, &mut can_take_d1, |sq| util::bitboard_from_square(sq + 7), SpecialBitsContainer::MayPromote(Move::CAPTURE));
@@ -174,8 +175,9 @@ impl MoveGenerator {
             can_take_d1 = not_pinned_d1 & ((b.bbs[AnyWhite as usize] & movable) << 7);
             can_take_d2 = not_pinned_d2 & ((b.bbs[AnyWhite as usize] & movable) << 9);
 
-            ep_take = not_pinned_d1 & (b.gs.en_passant_mask << 7)
-                    | not_pinned_d2 & (b.gs.en_passant_mask << 9);
+            let ep_mask = b.gs.en_passant_mask & (movable >> 8);
+            ep_take = not_pinned_d1 & (ep_mask << 7)
+                    | not_pinned_d2 & (ep_mask << 9);
             
             self.add_moves_with_function(b, moves, &mut can_push_single, |sq| util::bitboard_from_square(sq - 8), SpecialBitsContainer::MayPromote(Move::empty()));
             self.add_moves_with_function(b, moves, &mut can_push_double, |sq| util::bitboard_from_square(sq - 16), SpecialBitsContainer::ExactMoveBits(Move::DOUBLE_PAWN_PUSH));
@@ -271,6 +273,10 @@ impl MoveGenerator {
         let mut king_ban: Bitboard;
 
         let king_square = b.gs.playing_king_square;
+
+        if king_square == 64 {
+            println!("{b}");
+        }
     
         // Left shift by negative integer not allowed, consider inlining with function
         if b.gs.player_to_move == White {

@@ -8,6 +8,10 @@ use super::{
 
 impl Board {
     pub fn make_move(&mut self, mv: &Move) {
+        // if mv.to_string().contains("c8h3") {
+        //     println!("{self}");
+        // }
+
         let from = mv.get_from();
         let to = mv.get_to();
         let moving_piece = self.piece_list[from as usize].expect("Moving piece should exist");
@@ -62,5 +66,9 @@ impl Board {
         
         self.switch_sides();
         self.update_board_data();
+        if self.gs.playing_king_square == 64 {
+            println!("{self}");
+            println!("{mv}");
+        }
     }
 }

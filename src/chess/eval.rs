@@ -35,6 +35,6 @@ impl Eval {
         // if verbose {
         //     println!("MG: {} | EG: {} | phase: {}/{}", mg, eg, mg_game_phase, MAX_GAME_PHASE);
         // }
-        (mg_game_phase * mg + eg_game_phase * eg) / MAX_GAME_PHASE
+        ((mg_game_phase * mg as i32 + eg_game_phase * eg as i32) / MAX_GAME_PHASE) as Score
     }
 }

@@ -96,7 +96,7 @@ fn precompute_lookups(dirs: [(isize, isize); 4], magics: [Magic; 64]) -> Vec<Bit
     while sq < 64 {
         let mut blockers: Bitboard = precomputed::EMPTY;
         loop {
-            debug_assert!(lookup[magics[sq].calculate_index(blockers)] == precomputed::EMPTY);
+            assert!(lookup[magics[sq].calculate_index(blockers)] == precomputed::EMPTY);
 
             let mut attacking_squares = precomputed::EMPTY;
             let mut dir = 0;
@@ -108,7 +108,7 @@ fn precompute_lookups(dirs: [(isize, isize); 4], magics: [Magic; 64]) -> Vec<Bit
                     x += dirs[dir].0;
                     y += dirs[dir].1;
 
-                    debug_assert!(!(dirs[dir].0 == 0 && dirs[dir].1 == 0));
+                    assert!(!(dirs[dir].0 == 0 && dirs[dir].1 == 0));
 
                     if util::is_out_of_bounds(x, y) {
                         break;
@@ -138,7 +138,7 @@ fn precompute_lookups(dirs: [(isize, isize); 4], magics: [Magic; 64]) -> Vec<Bit
     // Make sure the lookup function is surjective:
     let mut idx = 0;
     while idx < table_size {
-        debug_assert!(lookup[idx] != precomputed::EMPTY);
+        assert!(lookup[idx] != precomputed::EMPTY);
         idx += 1;
     }
 
