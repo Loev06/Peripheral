@@ -2,7 +2,7 @@
 cargo bench --bench bench
 */
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use bot::{self, MoveGenerator, Board, MoveList, Perft, ChessEngine};
+use bot::{self, MoveGenerator, Board, MoveList, Perft, ChessEngine, SearchParams};
 
 fn move_gen(b: &mut Board, mg: &MoveGenerator) {
     mg.generate_legal_moves(b, &mut MoveList::new(), false);
@@ -14,7 +14,9 @@ fn run_perft(perft: &mut Perft, depth: u8) {
 
 fn run_search(engine: &mut ChessEngine, depth: u8) {
     engine.reset_table();
-    engine.search(depth);
+    let mut search_params = SearchParams::new();
+    search_params.depth = depth;
+    engine.search(search_params);
 }
 
 fn criterion_benchmark(c: &mut Criterion) {

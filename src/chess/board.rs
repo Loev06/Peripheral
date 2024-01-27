@@ -78,7 +78,7 @@ impl Display for GameState {
         f.write_str(format!(
             "curr player: {}\nking square: {}\ncastling: {}\nep: {}",
             self.player_to_move,
-            0,// precomputed::SQUARE_NAMES[self.playing_king_square as usize],
+            precomputed::SQUARE_NAMES[self.playing_king_square as usize],
             self.castling_rights,
             if self.en_passant_mask == precomputed::EMPTY {
                 "-"

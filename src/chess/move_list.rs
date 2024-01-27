@@ -51,23 +51,23 @@ impl MoveList {
         self.count += 1;
     }
 
-    fn grade_moves_with_function<F>(&mut self, grading_function: F, board: &Board)
+    fn grade_moves_with_function<F>(&mut self, grading_function: F, pv_move: Move, board: &Board)
     where 
-        F: Fn(Move, &Board) -> Grade
+        F: Fn(Move, Move, &Board) -> Grade
     {
         // The array is initialized until at least self.count - 1 and self.count < MAX_MOVE_COUNT,
         // so assume_init_mut and get_unchecked_mut are not undefined behaviour
         for i in 0..self.count {
             let mle = unsafe { self.moves.get_unchecked_mut(i).assume_init_mut() };
-            mle.set_score(grading_function(mle.mv, board));
+            mle.set_score(grading_function(mle.mv, pv_move, board));
         }
     }
 
-    pub fn sort_with_function<F>(mut self, grading_function: F, board: &Board) -> SortingMoveList
+    pub fn sort_with_function<F>(mut self, grading_function: F, pv_move: Move, board: &Board) -> SortingMoveList
     where 
-        F: Fn(Move, &Board) -> Grade
+        F: Fn(Move, Move, &Board) -> Grade
     {
-        self.grade_moves_with_function(grading_function, board);
+        self.grade_moves_with_function(grading_function, pv_move, board);
         SortingMoveList::new(self)
     }
 }

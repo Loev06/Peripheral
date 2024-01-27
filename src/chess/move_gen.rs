@@ -273,10 +273,6 @@ impl MoveGenerator {
         let mut king_ban: Bitboard;
 
         let king_square = b.gs.playing_king_square;
-
-        if king_square == 64 {
-            println!("{b}");
-        }
     
         // Left shift by negative integer not allowed, consider inlining with function
         if b.gs.player_to_move == White {

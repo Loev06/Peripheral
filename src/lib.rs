@@ -1,12 +1,12 @@
 pub const NAME: &str = "Rust Chess Engine";
-pub const VERSION: &str = "0.1.4";
+pub const VERSION: &str = "0.1.6";
 pub const AUTHOR: &str = "Loev06";
-pub const DATE: &str = "2024-01-04";
+pub const DATE: &str = "2024-01-17";
 
 use std::error::Error;
 use serde::{Deserialize, Serialize};
 
-pub use chess::{MoveGenerator, Board, MoveList, Perft, ChessEngine, util, PieceType::*, Color::*, Move, Eval, grade};
+pub use chess::{MoveGenerator, Board, MoveList, Perft, ChessEngine, SearchParams, util, PieceType::*, Color::*, Move, Eval, grade};
 
 #[allow(dead_code)]
 mod chess;
@@ -20,15 +20,15 @@ pub fn run_bot() -> Result<(), Box<dyn Error>> {
     let mut board = Board::try_from_fen(FEN)?;
     let mut moves = MoveList::new();
     mg.generate_legal_moves(&mut board, &mut moves, true);
-    for mv in moves.sort_with_function(grade, &board) {
-        println!("{} | {}", mv, grade(mv, &board));
+    for mv in moves.sort_with_function(grade, Move::new(19, 27, &Move::empty()), &board) {
+        println!("{} | {}", mv, grade(mv, Move::new(19, 27, &Move::empty()), &board));
     }
     
     // let mut chess_engine = ChessEngine::new(FEN);
     // let res = chess_engine.search(6);
     // println!("bestmove {} ({})", res.0, res.1);
 
-    
+
     // let mut board = Board::try_from_fen(FEN)?;
     // println!("{}", board);
     // let mut perft = Perft::new(board);

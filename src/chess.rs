@@ -1,5 +1,6 @@
 mod chess_engine;
 pub use chess_engine::ChessEngine;
+pub use chess_engine::SearchParams;
 
 mod board;
 pub use board::Board;
