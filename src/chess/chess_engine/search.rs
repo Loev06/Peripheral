@@ -11,7 +11,7 @@ pub use transposition_table::TranspositionTable;
 use transposition_table::{TTProbeResult, TTEntry, NodeType};
 
 impl ChessEngine {
-    pub fn search(&mut self, search_params: SearchParams) -> (Move, Score) {
+    pub fn search(&mut self, search_params: SearchParams, verbose: bool) -> (Move, Score) {
         self.timer = Instant::now();
         self.search_time = search_params.move_time.unwrap_or(
             match self.board.gs.player_to_move {
@@ -25,8 +25,6 @@ impl ChessEngine {
         let tt_index = (self.board.key as usize >> TT_INDEX_SHIFT) & (TT_SIZE - 1);
         let mut last_search = TTEntry::empty();
 
-        self.current_position = self.board.key;
-
         for current_depth in 1..=std::cmp::min(search_params.depth, MAX_DEPTH as u8) {
             self.tt.next_generation();
             self.nodes = 0;
@@ -34,34 +32,55 @@ impl ChessEngine {
 
             self.negamax(MIN_SCORE, MAX_SCORE, current_depth, 0);
 
-            let option_last_search = self.tt.get_entry(tt_index, self.board.key);
-            if option_last_search.is_none() {
-                dbg!("TT did not include root", self.tt.tt[tt_index]);
-            }
-            last_search = option_last_search.expect("TT should include root");
+            last_search = self.tt.get_entry(tt_index, self.board.key).expect("TT should include root");
 
             pv = self.tt.get_pv(&mut self.board, current_depth);
-            println!(
-                "info depth {} score cp {} nodes {} time {} pv{}",
-                current_depth,
-                last_search.score,
-                self.nodes,
-                self.timer.elapsed().as_millis(),
-                pv.iter().fold(String::new(), |acc, x| {format!("{acc} {x}")})
-            );
+
+            if verbose {
+                self.print_search_info(last_search, current_depth, &pv);
+            }
 
             if self.timer.elapsed().as_millis() >= self.search_time {
                 break;
             }
         }
 
-        let ponder = pv.get(1);
-        if let Some(mv) = ponder {
-            println!("bestmove {} ponder {}", pv[0], mv);
-        } else {
-            println!("bestmove {}", pv[0]);
+        if verbose {
+            let ponder = pv.get(1);
+            if let Some(mv) = ponder {
+                println!("bestmove {} ponder {}", pv[0], mv);
+            } else {
+                println!("bestmove {}", pv[0]);
+            }
         }
         (last_search.best_move, last_search.score)
+    }
+
+    fn print_search_info(&self, last_search: TTEntry, depth: u8, pv: &Vec<Move>) {
+        let elapsed = self.timer.elapsed().as_millis();
+
+        let mate_score = {
+            let unsigned_mate_in_plies = CHECKMATE_SCORE - last_search.score.abs();
+            if unsigned_mate_in_plies < 100 {
+                Some(unsigned_mate_in_plies / 2 * last_search.score.signum())
+            } else {
+                None
+            }
+        };
+
+        println!(
+            "info depth {} score {} nodes {} nps {} time {} pv{}",
+            depth,
+            if let Some(mate) = mate_score {
+                format!("mate {}", mate)
+            } else {
+                format!("cp {}", last_search.score)
+            },
+            self.nodes,
+            if elapsed == 0 { 0 } else { self.nodes as u128 * 1000 / elapsed },
+            elapsed,
+            pv.iter().fold(String::new(), |acc, x| {format!("{acc} {x}")})
+        );
     }
 
     fn negamax(&mut self, mut alpha: Score, beta: Score, depth: u8, ply: u8) -> Score {

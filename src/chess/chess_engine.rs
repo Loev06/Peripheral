@@ -47,9 +47,7 @@ pub struct ChessEngine {
     timer: Instant,
     nodes: u64,
     search_time: u128,
-    search_canceled: bool,
-
-    current_position: u64
+    search_canceled: bool
 }
 
 impl ChessEngine {
@@ -63,8 +61,6 @@ impl ChessEngine {
             nodes: 0,
             search_time: 0,
             search_canceled: false,
-
-            current_position: 0
         }
     }
 

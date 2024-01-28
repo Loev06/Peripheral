@@ -16,7 +16,7 @@ fn run_search(engine: &mut ChessEngine, depth: u8) {
     engine.reset_table();
     let mut search_params = SearchParams::new();
     search_params.depth = depth;
-    engine.search(search_params);
+    engine.search(search_params, false);
 }
 
 fn criterion_benchmark(c: &mut Criterion) {

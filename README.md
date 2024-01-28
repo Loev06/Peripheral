@@ -1,61 +1,46 @@
 # Rust-Chess-Engine
 
-A chess engine in development. I'm learning Rust as I go, so any feedback is appreciated.
+A chess engine in development. I'm learning Rust and engine dev as I go, so any feedback is appreciated.
 
-Search features:
+## Lichess
+
+[The bot runs on Lichess.org!](https://lichess.org/@/LoevBot)
+*(Currently running on a 2GHz `Odroid N2+`)*
+
+## Search features:
+
+- iterative deepening
 - alpha-beta negamax
+- transposition table
+    - current replacement scheme:
+        1. previous PV always remains
+        2. previous iteration gets replaced
+        3. depth-preferred replacement
 - move ordering:
-    - MVV-LVA
+    1. TT move
+    2. MVV-LVA
 
-Eval features:
+## Eval features:
+
 - PeSTO eval
 
-# UCI
-
-The engine is UCI compatible! See https://github.com/Loev06/uci for the source code.
-
 # How to build
-This repository only contains the library for the chess engine, so building it is not (yet) convenient from GitHub. I will improve the git structure some time later, but here is a rudimentary method for builing:
 
-1. Put both this repository (named `bot` below) and the corresponding UCI repository (named `uci` below) as childs in a parent directory, and reference them with a new `Cargo.toml`:
+Since version `0.1.7`, the [uci repository](https://github.com/Loev06/uci) has been combined with this repository, so building from source should now be trivial:
 
-```toml
-# Cargo.toml
+In the root directory, run
+`cargo build --release`
 
-[workspace]
+## Benchmarks
 
-members = [
-    "chess_engine",
-    "uci",
-    "bot"
-]
+Some [Criterion](https://crates.io/crates/criterion) benchmarks used for development can be run with
+`cargo bench --bench bench`
 
-resolver = "2"
-```
+One statistic which I'm proud of:
+> `perft(6)`takes on average`430 ms`, which is`~276 MNPS!`(bulk counting, no hashing)
 
-2. Now we need to make a binary to run the uci program. Make a directory `/chess_engine/`, and add `/chess_engine/Cargo.toml` and `/chess_engine/src/main.rs` with the following contents:
+## Perft test suite
 
-```toml
-# /chess_engine/Cargo.toml
-
-[package]
-name = "chess_engine"
-version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-lichess = { path = "../uci"}
-```
-
-```rust
-// /chess_engine/src/main.rs
-
-use uci::Uci;
-
-fn main() {
-    Uci::new().run();
-}
-```
-3. Run `cargo build --release`
+Run a perft test suite with
+`cargo test --release -- --nocapture`
+This performs perft on 32 tricky positions and compares it with expected perft results.

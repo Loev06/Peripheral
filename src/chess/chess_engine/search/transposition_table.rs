@@ -17,8 +17,7 @@ pub enum NodeType {
 }
 
 // GenBound contains (bit 1 being lsb):
-// bits 4-8: generation (u8)
-// bit  3:   pv (bool)
+// bits 3-8: generation (u8)
 // bits 1-2: NodeType (enum)
 #[derive(Clone, Copy, Debug)]
 pub struct GenBound(u8);
@@ -33,10 +32,6 @@ impl GenBound {
     pub fn generation(&self) -> u8 {
         self.0 & 0b11111100
     }
-
-    // pub fn is_pv(&self) -> bool {
-    //     (self.0 & 0b100) != 0
-    // }
 
     pub fn node_type(&self) -> NodeType {
         match self.0 & 0b11 {
@@ -82,16 +77,16 @@ impl TTEntry {
         inversion:
         if old.gen == new.gen
             && (
-                (old.is_pv && old != new)
-                || old.depth >= new.depth
+                old.depth >= new.depth
+                || (old.is_pv && old != new)
             )
      */
 
     pub fn save(&mut self, key: TTKey, best_move: Move, depth: u8, score: Score, gen_bound: GenBound) {
         if self.gen_bound.generation() == gen_bound.generation()
             && (
-                (self.gen_bound.node_type() == NodeType::PV && self.key != key)
-                || self.depth >= depth
+                self.depth >= depth // cheapest check first
+                || (self.gen_bound.node_type() == NodeType::PV && self.key != key)
             )
         {
             return;
