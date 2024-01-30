@@ -37,12 +37,12 @@ In the root directory, run
 `cargo build --release`
 
 ## UCI commands
-- default UCI commands (not 100% complete, but sufficient for compatibility with e.g. Cute Chess)
-- help       Show list of known commands
-- d          Print current board
-- eval       Static eval of position
-- run        Run main function of the bot (multipurpose debug command, runs run_bot() located in lib.rs)
-- quit       Quit."
+- **default UCI commands** (not 100% complete, but sufficient for compatibility with e.g. Cute Chess)
+- `help`       Show list of known commands
+- `d`          Print current board
+- `eval`       Static eval of position
+- `run`        Run main function of the bot (multipurpose debug command, runs run_bot() located in lib.rs)
+- `quit`       Quit
 
 ## Benchmarks
 
