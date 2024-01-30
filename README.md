@@ -7,6 +7,10 @@ A chess engine in development. I'm learning Rust and engine dev as I go, so any 
 [The bot runs on Lichess.org!](https://lichess.org/@/LoevBot)
 *(Currently running on a 2GHz `Odroid N2+`)*
 
+## Rating estimates
+`~1860` CCRL blitz, based on a small gauntlet against three engines in the CCRL pool
+`~1950` Lichess (all time controls). Probably not representative outside of Lichess, since the bot plays on relatively weak hardware, sometimes against human players, etc. etc.
+
 ## Search features:
 
 - iterative deepening

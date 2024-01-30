@@ -1,6 +1,6 @@
 use std::time::Instant;
 use super::{
-    ChessEngine, SearchParams, TT_SIZE, TT_INDEX_SHIFT, MAX_DEPTH,
+    ChessEngine, SearchParams, MAX_DEPTH,
     super::{
         Move, Score, MIN_SCORE, MAX_SCORE, CHECKMATE_SCORE, Eval, MoveList, Color, grade
     }
@@ -22,7 +22,7 @@ impl ChessEngine {
 
         let mut pv = Vec::new();
 
-        let tt_index = (self.board.key as usize >> TT_INDEX_SHIFT) & (TT_SIZE - 1);
+        let tt_index = self.tt.calc_index(self.board.key);
         let mut last_search = TTEntry::empty();
 
         for current_depth in 1..=std::cmp::min(search_params.depth, MAX_DEPTH as u8) {
@@ -100,7 +100,7 @@ impl ChessEngine {
             return score;
         }
 
-        let tt_index = (self.board.key as usize >> TT_INDEX_SHIFT) & (TT_SIZE - 1);
+        let tt_index = self.tt.calc_index(self.board.key);
         let mut best_move = match self.tt.probe(tt_index, alpha, beta, depth, self.board.key) {
             TTProbeResult::Score(score) => return score,
             TTProbeResult::BestMove(mv) => mv,

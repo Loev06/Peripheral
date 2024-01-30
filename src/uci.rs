@@ -1,23 +1,29 @@
-use bot::{ChessEngine, Move, Board, Perft, Eval, SearchParams};
-use std::io;
+use chess_engine::{ChessEngine, Move, Board, Perft, Eval, SearchParams};
+use std::{io, str::SplitAsciiWhitespace};
 
 const START_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
+const DEFAULT_TABLE_SIZE: usize = 16;
+const MIN_TABLE_SIZE: usize = 1;
+const MAX_TABLE_SIZE: usize = 1024;
+
 pub struct Uci {
     engine: ChessEngine,
-    ready: bool
+    ready: bool,
+    table_size: usize
 }
 
 impl Uci {
     pub fn new() -> Self {
         Self {
-            engine: ChessEngine::new(START_FEN),
-            ready: true
+            engine: ChessEngine::new(START_FEN, DEFAULT_TABLE_SIZE),
+            ready: true,
+            table_size: DEFAULT_TABLE_SIZE
         }
     }
 
     pub fn get_header() -> String {
-        format!("{} v{} - {} ({})", bot::NAME, bot::VERSION, bot::AUTHOR, bot::DATE)
+        format!("{} v{} - {} ({})", chess_engine::NAME, chess_engine::VERSION, chess_engine::AUTHOR, chess_engine::DATE)
     }
 
     pub fn run(&mut self) {
@@ -29,21 +35,23 @@ impl Uci {
                 .read_line(&mut input)
                 .expect("Could not read line.");
 
-            let args: Vec<&str> = input.split_ascii_whitespace().collect();
+            let mut args: SplitAsciiWhitespace = input.split_ascii_whitespace();
             
-            match args[0] {
-                "help"       => self.help(),
-                "uci"        => self.uci(),
-                "isready"    => self.isready(),
-                "setoption"  => self.setoption(args),
-                "ucinewgame" => self.ucinewgame(),
-                "position"   => self.position(args),
-                "go"         => self.go(args),
-                "d"          => self.d(),
-                "eval"       => self.eval(),
-                "run"        => self.run_bot(),
-                "quit"       => break,
-                other => println!("Unknown command: '{}'. Type 'help' for a list of commands.", other)
+            if let Some(command) = args.next() {
+                match command {
+                    "help"       => self.help(),
+                    "uci"        => self.uci(),
+                    "isready"    => self.isready(),
+                    "setoption"  => self.setoption(&mut args),
+                    "ucinewgame" => self.ucinewgame(),
+                    "position"   => self.position(&mut args),
+                    "go"         => self.go(&mut args),
+                    "d"          => self.d(),
+                    "eval"       => self.eval(),
+                    "run"        => self.run_bot(),
+                    "quit"       => break,
+                    other => println!("Unknown command: '{}'. Type 'help' for a list of commands.", other)
+                }
             }
         }
     }
@@ -70,9 +78,12 @@ List of known commands:
         println!("id name {} v{}
 id author {}
 
+option name Hash type spin default {} min {} max {}
 uciok",
-            bot::NAME, bot::VERSION,
-            bot::AUTHOR
+            chess_engine::NAME, chess_engine::VERSION,
+            chess_engine::AUTHOR,
+
+            DEFAULT_TABLE_SIZE, MIN_TABLE_SIZE, MAX_TABLE_SIZE
         );
     }
 
@@ -81,29 +92,54 @@ uciok",
         println!("readyok");
     }
 
-    fn setoption(&mut self, _args: Vec<&str>) {
+    fn setoption(&mut self, args: &mut SplitAsciiWhitespace) {
         self.ready = false;
+
+        args.next(); // "name"
+        let name = args.next();
+        args.next(); // "value"
+        let Some(value) = args.next() else {
+            println!("No value given");
+            return;
+        };
+        let Ok(value) = value.parse::<usize>() else {
+            println!("Invalid value");
+            return;
+        };
+
+        if let Some(name) = name {
+            match name.to_ascii_lowercase().as_str() {
+                "hash" => {
+                        if value < MIN_TABLE_SIZE || value > MAX_TABLE_SIZE {
+                            println!("Hash size not within required bounds");
+                            return;
+                        }
+                        self.table_size = value;
+                        println!("Set hash size to {}mb", self.table_size);
+                    },
+                _ => ()
+            }
+        }
 
         self.ready = true;
     }
 
     fn ucinewgame(&mut self) {
         self.ready = false;
-        self.engine.reset_table();
+        self.engine.reset_table(self.table_size);
         self.ready = true;
     }
 
-    fn position(&mut self, args: Vec<&str>) {
+    fn position(&mut self, args: &mut SplitAsciiWhitespace) {
         self.ready = false;
 
-        let moves_index = args.clone().into_iter().position(|s| s == "moves");
-        
-        let start_fen = if let Some(pos_type) = args.get(1) {
-            match *pos_type {
+        let start_fen = if let Some(pos_type) = args.next() {
+            match pos_type {
                 "startpos" => {
                     String::from(START_FEN)
                 },
-                "fen" => args[2..moves_index.unwrap_or(args.capacity())].join(" "),
+                "fen" => args.clone().take_while(|x| !(*x).eq("moves"))
+                    .fold(String::new(), |acc, x| format!("{acc}{x} ")),
                 _ => return
             }
         } else {
@@ -119,29 +155,27 @@ uciok",
             }
         };
 
-        if let Some(moves_index) = moves_index {
-            for mv_str in &args[moves_index + 1..] {
-                let mv = match Move::try_from_str(mv_str, &board) {
-                    Ok(mv) => mv,
-                    Err(e) => {
-                        println!("Error parsing move {}: {}", mv_str, e);
-                        return;
-                    }
-                };
-                board.make_move(&mv);
-            }
+        let moves = args.skip_while(|x| !(*x).eq("moves")).skip(1); // skip "moves" string
+
+        for mv_str in moves {
+            let mv = match Move::try_from_str(mv_str, &board) {
+                Ok(mv) => mv,
+                Err(e) => {
+                    println!("Error parsing move {}: {}", mv_str, e);
+                    return;
+                }
+            };
+            board.make_move(&mv);
         }
 
         self.engine.set_board(board.get_fen().as_str());
         self.ready = true;
     }
 
-    fn go(&mut self, args: Vec<&str>) {
+    fn go(&mut self, args: &mut SplitAsciiWhitespace) {
         let mut search_params = SearchParams::new();
-        let mut args = args.iter();
-        args.next();
         while let Some(a) = args.next() {
-            match *a {
+            match a {
                 "perft" => {
                     let board = Board::try_from_fen(self.engine.get_board_fen().as_str()).expect("Engine returned an incorrect fen");
                     let depth = args.next().expect("no depth given").parse::<u8>().expect("depth not a byte");
@@ -170,7 +204,7 @@ uciok",
     }
 
     fn run_bot(&self) {
-        bot::run_bot().unwrap_or_else(|e| println!("Bot returned an error: {}", e));
+        chess_engine::run_bot().unwrap_or_else(|e| println!("Bot returned an error: {}", e));
     }
 }
 

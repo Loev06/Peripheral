@@ -1,0 +1,52 @@
+Rank Name                          Elo     +/-   Games    Wins  Losses   Draws   Points   Score    Draw  DStale  DMater  DRepet  DMoves    DAdj  DAgree  OtherD 
+   0 Chess Engine v0.1.7            14      36     219      73      64      82    114.0   52.1%   37.4%       0       4      77       1       0       0       0 
+   1 gunborg1.35                   149      71      74      41      11      22     52.0   70.3%   29.7%       0       0      22       0       0       0       0 
+   2 Deepov                        -53      59      73      14      25      34     31.0   42.5%   46.6%       0       1      32       1       0       0       0 
+   3 shallowblue                  -143      67      72       9      37      26     22.0   30.6%   36.1%       0       3      23       0       0       0       0 
+
+SPRT: llr 0 (0.0%), lbound -inf, ubound inf
+219 of 6000 games finished.
+
+Player: Chess Engine v0.1.7
+   "Draw by 3-fold repetition": 77
+   "Draw by fifty moves rule": 1
+   "Draw by insufficient mating material": 4
+   "Loss: Black mates": 34
+   "Loss: White mates": 30
+   "Win: Black mates": 33
+   "Win: White mates": 40
+Player: gunborg1.35
+   "Draw by 3-fold repetition": 22
+   "Loss: Black mates": 7
+   "Loss: White mates": 4
+   "Win: Black mates": 23
+   "Win: White mates": 18
+Player: Deepov
+   "Draw by 3-fold repetition": 32
+   "Draw by fifty moves rule": 1
+   "Draw by insufficient mating material": 1
+   "Loss: Black mates": 10
+   "Loss: White mates": 15
+   "Win: Black mates": 7
+   "Win: White mates": 7
+Player: shallowblue
+   "Draw by 3-fold repetition": 23
+   "Draw by insufficient mating material": 3
+   "Loss: Black mates": 16
+   "Loss: White mates": 21
+   "Win: Black mates": 4
+   "Win: White mates": 5
+
+Least squares fitting:
+A = [1 149; 1 -53; 1 -143]
+y = [2026, 1820, 1616]'
+
+A' * A \ A' * y
+ans =
+
+   1.0e+03 *
+
+    1.8416
+    0.0013
+
+1841.6 + 14 * 1.3 = 1859.8

@@ -2,7 +2,9 @@
 cargo bench --bench bench
 */
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use bot::{self, MoveGenerator, Board, MoveList, Perft, ChessEngine, SearchParams};
+use chess_engine::{self, MoveGenerator, Board, MoveList, Perft, ChessEngine, SearchParams};
+
+const TABLE_SIZE: usize = 8;
 
 fn move_gen(b: &mut Board, mg: &MoveGenerator) {
     mg.generate_legal_moves(b, &mut MoveList::new(), false);
@@ -13,14 +15,14 @@ fn run_perft(perft: &mut Perft, depth: u8) {
 }
 
 fn run_search(engine: &mut ChessEngine, depth: u8) {
-    engine.reset_table();
+    engine.reset_table(TABLE_SIZE);
     let mut search_params = SearchParams::new();
     search_params.depth = depth;
     engine.search(search_params, false);
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let mut engine = ChessEngine::new("6k1/1N2q1pp/2pn1p2/p2n4/P2P4/1Q3N2/1P3PPP/6K1 b - - 0 30");
+    let mut engine = ChessEngine::new("6k1/1N2q1pp/2pn1p2/p2n4/P2P4/1Q3N2/1P3PPP/6K1 b - - 0 30", TABLE_SIZE);
 
     let board_perft = Board::try_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").expect("Incorrect fen");
     let mut perft = Perft::new(board_perft);
@@ -32,7 +34,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut board_castling = Board::try_from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1").expect("Incorrect fen");
     
     
-    c.bench_function("tt_init_overhead", |b| b.iter_with_large_drop(|| engine.reset_table()));
+    c.bench_function("tt_init_overhead", |b| b.iter_with_large_drop(|| engine.reset_table(TABLE_SIZE)));
     c.bench_function("Search depth 6", |b| b.iter_with_large_drop(|| run_search(black_box(&mut engine), black_box(6))));
     // c.bench_function("Search depth 7", |b| b.iter(|| run_search(black_box(&mut engine), black_box(7))));
     // c.bench_function("Search depth 8", |b| b.iter(|| run_search(black_box(&mut engine), black_box(8))));

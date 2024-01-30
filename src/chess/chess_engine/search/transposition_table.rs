@@ -1,8 +1,7 @@
-use super::{
-    TT_INDEX_SHIFT, TT_SIZE,
-    super::super::{
-        Move, Score, Board
-    }
+use std::mem::size_of;
+
+use super::super::super::{
+    Move, Score, Board
 };
 
 // Key as stored in a TTEntry. u16 should be enough for no collisions to be occuring (1 in (2^16 * TT_SIZE) for each node)
@@ -112,15 +111,32 @@ pub enum TTProbeResult {
 
 pub struct TranspositionTable {
     pub tt: Vec<TTEntry>,
+    size: usize,
+    mask: u64,
+    shift: u32,
     generation: u8
 }
 
 impl TranspositionTable {
-    pub fn new(size: usize) -> Self {
+    pub fn new(size_mb: usize) -> Self {
+        let size = Self::tt_size_from_mb(size_mb);
         Self{
             tt: vec![TTEntry::empty(); size],
+            size,
+            mask: size as u64 - 1,
+            shift: usize::BITS - size.trailing_zeros(),
             generation: 0
         }
+    }
+
+    pub const fn tt_size_from_mb(mb: usize) -> usize {
+        let preferred_size = mb * 1024 * 1024 / size_of::<TTEntry>();
+        1 << preferred_size.ilog2() // round down
+    }
+
+    #[inline(always)]
+    pub const fn calc_index(&self, key: u64) -> usize {
+        ((key >> self.shift) & self.mask) as usize
     }
 
     pub fn next_generation(&mut self) {
@@ -130,7 +146,7 @@ impl TranspositionTable {
     pub fn get_pv(&mut self, board: &mut Board, depth: u8) -> Vec<Move> {
         let mut pv = Vec::new();
 
-        let tt_index = (board.key as usize >> TT_INDEX_SHIFT) & (TT_SIZE - 1);
+        let tt_index = self.calc_index(board.key);
         let entry = &mut self.tt[tt_index];
         let best_move = entry.best_move;
 
