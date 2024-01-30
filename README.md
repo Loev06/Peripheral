@@ -7,8 +7,9 @@ A chess engine in development. I'm learning Rust and engine dev as I go, so any 
 [The bot runs on Lichess.org!](https://lichess.org/@/LoevBot)
 *(Currently running on a 2GHz `Odroid N2+`)*
 
-## Rating estimates
+## Rating estimations
 `~1860` CCRL blitz, based on a small gauntlet against three engines in the CCRL pool
+
 `~1950` Lichess (all time controls). Probably not representative outside of Lichess, since the bot plays on relatively weak hardware, sometimes against human players, etc. etc.
 
 ## Search features:
@@ -34,6 +35,14 @@ Since version `0.1.7`, the [uci repository](https://github.com/Loev06/uci) has b
 
 In the root directory, run
 `cargo build --release`
+
+## UCI commands
+- default UCI commands (not 100% complete, but sufficient for compatibility with e.g. Cute Chess)
+- help       Show list of known commands
+- d          Print current board
+- eval       Static eval of position
+- run        Run main function of the bot (multipurpose debug command, runs run_bot() located in lib.rs)
+- quit       Quit."
 
 ## Benchmarks
 
