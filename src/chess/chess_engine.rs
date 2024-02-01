@@ -1,6 +1,6 @@
-use std::time::Instant;
+use std::{error::Error, time::Instant};
 
-use super::{Board, MoveGenerator};
+use super::{Board, MoveGenerator, Move};
 
 mod search;
 use search::TranspositionTable;
@@ -36,7 +36,9 @@ pub struct ChessEngine {
     timer: Instant,
     nodes: u64,
     search_time: u128,
-    search_canceled: bool
+    search_canceled: bool,
+
+    uci_moves: Vec<Move>
 }
 
 impl ChessEngine {
@@ -50,6 +52,8 @@ impl ChessEngine {
             nodes: 0,
             search_time: 0,
             search_canceled: false,
+            
+            uci_moves: Vec::new()
         }
     }
 
@@ -57,15 +61,24 @@ impl ChessEngine {
         self.tt = TranspositionTable::new(size_mb);
     }
 
-    pub fn set_board(&mut self, fen: &str) {
-        self.board = Board::try_from_fen(fen).expect("Invalid fen");
+    pub fn set_board(&mut self, fen: &str) -> Result<(), Box<dyn Error>> {
+        self.board = Board::try_from_fen(fen)?;
+        Ok(())
     }
 
-    pub fn get_board_fen(&self) -> String {
-        self.board.get_fen()
+    pub fn get_board(&self) -> &Board {
+        &self.board
     }
 
-    pub fn get_board_string(&self) -> String {
-        self.board.to_string()
+    pub fn make_uci_move(&mut self, mv: &str) -> Result<(), Box<dyn Error>> {
+        let mv = Move::try_from_str(mv, &self.board)?;
+        self.board.make_move(&mv);
+        self.uci_moves.push(mv);
+        Ok(())
+    }
+
+    pub fn undo_move(&mut self) -> Result<(), &str>{
+        self.board.undo_move(&self.uci_moves.pop().ok_or("No move to undo")?);
+        Ok(())
     }
 }

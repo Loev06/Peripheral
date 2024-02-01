@@ -1,4 +1,4 @@
-use chess_engine::{ChessEngine, Move, Board, Perft, Eval, SearchParams};
+use chess_engine::{ChessEngine, Board, Perft, Eval, SearchParams};
 use std::{io, str::SplitAsciiWhitespace};
 
 const START_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -49,6 +49,8 @@ impl Uci {
                     "d"          => self.d(),
                     "eval"       => self.eval(),
                     "run"        => self.run_bot(),
+                    "make"       => self.make(&mut args),
+                    "undo"       => self.undo(),
                     "quit"       => break,
                     other => println!("Unknown command: '{}'. Type 'help' for a list of commands.", other)
                 }
@@ -69,6 +71,8 @@ List of known commands:
 - d          Print current board
 - eval       Static eval of position
 - run        Run main function of the bot
+- make       Make move
+- undo       Undo last move made
 - quit       Quit.", 
             Self::get_header()
         );
@@ -147,10 +151,10 @@ uciok",
             return;
         };
 
-        let mut board = match Board::try_from_fen(&start_fen) {
-            Ok(b) => b,
-            Err(_) => {
-                println!("Invalid position!");
+        match self.engine.set_board(&start_fen) {
+            Ok(_) => (),
+            Err(err) => {
+                println!("Invalid fen: {}", err);
                 return;
             }
         };
@@ -158,17 +162,15 @@ uciok",
         let moves = args.skip_while(|x| !(*x).eq("moves")).skip(1); // skip "moves" string
 
         for mv_str in moves {
-            let mv = match Move::try_from_str(mv_str, &board) {
+            match self.engine.make_uci_move(mv_str) {
                 Ok(mv) => mv,
                 Err(e) => {
                     println!("Error parsing move {}: {}", mv_str, e);
                     return;
                 }
             };
-            board.make_move(&mv);
         }
 
-        self.engine.set_board(board.get_fen().as_str());
         self.ready = true;
     }
 
@@ -177,7 +179,7 @@ uciok",
         while let Some(a) = args.next() {
             match a {
                 "perft" => {
-                    let board = Board::try_from_fen(self.engine.get_board_fen().as_str()).expect("Engine returned an incorrect fen");
+                    let board = Board::try_from_fen(self.engine.get_board().get_fen().as_str()).expect("Engine returned an incorrect fen");
                     let depth = args.next().expect("no depth given").parse::<u8>().expect("depth not a byte");
                     Perft::new(board).verb_perft(depth, true, false);
                     return;
@@ -195,25 +197,33 @@ uciok",
     }
 
     fn d(&self) {
-        println!("{}", self.engine.get_board_string());
+        println!("{}", self.engine.get_board().to_string());
     }
 
     fn eval(&self) {
-        let board = Board::try_from_fen(self.engine.get_board_fen().as_str()).expect("Engine returned an incorrect fen");
+        let board = Board::try_from_fen(self.engine.get_board().to_string().as_str()).expect("Engine returned an incorrect fen");
         println!("{}", Eval::eval(&board));
     }
 
     fn run_bot(&self) {
         chess_engine::run_bot().unwrap_or_else(|e| println!("Bot returned an error: {}", e));
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+    fn make(&mut self, args: &mut SplitAsciiWhitespace) {
+        let Some(mv) = args.next() else {
+            println!("No move given");
+            return;
+        };
+        match self.engine.make_uci_move(mv) {
+            Ok(mv) => mv,
+            Err(e) => {
+                println!("Error parsing move {}: {}", mv, e);
+                return;
+            }
+        };
+    }
 
-    #[test]
-    fn it_works() {
-        Uci::new().run()
+    fn undo(&mut self) {
+        self.engine.undo_move().unwrap_or_else(|err| println!("{err}"));
     }
 }

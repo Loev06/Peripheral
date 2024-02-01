@@ -38,11 +38,13 @@ In the root directory, run
 
 ## UCI commands
 - **default UCI commands** (not 100% complete, but sufficient for compatibility with e.g. Cute Chess)
-- `help`       Show list of known commands
-- `d`          Print current board
-- `eval`       Static eval of position
-- `run`        Run main function of the bot (multipurpose debug command, runs run_bot() located in lib.rs)
-- `quit`       Quit
+- `help`        Show list of known commands
+- `d`           Print current board
+- `eval`        Static eval of position
+- `run`         Run main function of the bot (multipurpose debug command, runs run_bot() located in lib.rs)
+- `make [move]` Make move (*e.g. `e2e4`*)
+- `undo`        Undo last move made
+- `quit`        Quit
 
 ## Benchmarks
 

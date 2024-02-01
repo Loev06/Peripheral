@@ -1,48 +1,9 @@
-use std::mem;
-
 use super::{
-    GameState, zobrist::*,
+    zobrist::*,
     super::{
         Board, Move, PieceType, PieceType::*, precomputed, util
     }
 };
-
-const MOVE_HISTORY_CAPACITY: usize = 512;
-
-#[derive(Clone, Copy)]
-pub struct GSHistoryEntry {
-    pub gs: GameState,
-    pub captured_piece: Option<PieceType>
-}
-
-pub struct GSHistory {
-    history: [GSHistoryEntry; MOVE_HISTORY_CAPACITY],
-    count: usize
-}
-
-impl GSHistory {
-    pub fn new() -> Self {
-        Self {
-            history: unsafe {
-                let block: mem::MaybeUninit<[GSHistoryEntry; MOVE_HISTORY_CAPACITY]> = mem::MaybeUninit::uninit();
-                block.assume_init()
-            },
-            count: 0
-        }
-    }
-
-    pub fn push(&mut self, gs: GSHistoryEntry) {
-        debug_assert!(self.count < MOVE_HISTORY_CAPACITY);
-        self.history[self.count] = gs;
-        self.count += 1;
-    }
-
-    pub fn pop(&mut self) -> GSHistoryEntry {
-        debug_assert!(self.count > 0);
-        self.count -= 1;
-        self.history[self.count]
-    }
-}
 
 impl Board {
     pub fn undo_move(&mut self, mv: &Move) {
@@ -51,6 +12,8 @@ impl Board {
 
         let gs_entry = self.gs_history.pop();
         self.gs = gs_entry.gs;
+
+        self.key_history.pop();
         
         let from = mv.get_from();
         let to = mv.get_to();

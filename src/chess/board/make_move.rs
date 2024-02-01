@@ -1,6 +1,6 @@
 use super::{
     Board,
-    undo_move::GSHistoryEntry, 
+    history::GSHistoryEntry, 
     super::{
         Move, PieceType, PieceType::*, util, precomputed, zobrist::*
     }
@@ -12,10 +12,13 @@ impl Board {
         let to = mv.get_to();
         let moving_piece = self.piece_list[from as usize].expect("Moving piece should exist");
         let capturing_piece = self.piece_list[to as usize];
+        let mut revertable: bool;
 
         let new_piece_type = if mv.is_promotion() {
+            revertable = false;
             mv.get_promotion_piece(self.gs.player_to_move)
         } else {
+            revertable = true;
             moving_piece
         };
 
@@ -33,9 +36,11 @@ impl Board {
         
         if let Some(pt) = capturing_piece {
             self.remove_piece(pt, to);
+            revertable = false;
         } else {
             match new_piece_type {
                 WPawn | BPawn => {
+                    revertable = false;
                     if mv.is_ep() {
                         self.remove_piece(PieceType::from_color(WPawn, self.gs.opponent_color), to ^ 8); // En-passant
                     } else if mv.intersects(Move::DOUBLE_PAWN_PUSH) {
@@ -46,9 +51,11 @@ impl Board {
                 WKing | BKing => {
                     let rook_type = PieceType::from_color(WRook, self.gs.player_to_move);
                     if mv.contains(Move::QUEEN_CASTLE) {
+                        revertable = false;
                         self.remove_piece(rook_type, from - 4); // Queen castle
                         self.place_piece(rook_type, from - 1);
                     } else if mv.contains(Move::KING_CASTLE) {
+                        revertable = false;
                         self.remove_piece(rook_type, from + 3); // King castle
                         self.place_piece(rook_type, from + 1);
                     }
@@ -62,9 +69,6 @@ impl Board {
         
         self.switch_sides();
         self.update_board_data();
-        if self.gs.playing_king_square == 64 {
-            println!("{self}");
-            println!("{mv}");
-        }
+        self.key_history.push_key(self.key, revertable)
     }
 }

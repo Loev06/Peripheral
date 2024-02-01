@@ -10,8 +10,10 @@ use super::{
 pub mod zobrist;
 mod make_move;
 mod undo_move;
-use self::{undo_move::GSHistory, zobrist::*};
+use self::{history::GSHistory, zobrist::*};
 mod parse_fen;
+mod history;
+use history::KeyHistory;
 
 struct FENdata<'a> {
     rows: Vec<&'a str>,
@@ -95,7 +97,8 @@ pub struct Board {
     pub gs: GameState,
     pub key: u64,
 
-    gs_history: GSHistory
+    gs_history: GSHistory,
+    key_history: KeyHistory
 }
 
 impl Board {
@@ -107,6 +110,7 @@ impl Board {
             key: 0,
 
             gs_history: GSHistory::new(),
+            key_history: KeyHistory::new(0)
         }
     }
 
@@ -220,7 +224,7 @@ impl Board {
 impl Display for Board {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(format!(
-            "\n{}\nkey: {:X}\n{}\n{}\n",
+            "\n{}\nkey: {:X}\n{}\n",
             (0..8).rev().map(|y| {
                 (0..8).map(|x| {
                     match self.piece_list[util::square_from_coord(x, y) as usize] {
@@ -235,8 +239,7 @@ impl Display for Board {
             .fold(String::from("+---+---+---+---+---+---+---+---+\n"), |a, b| a + &b + "\n+---+---+---+---+---+---+---+---+\n")
             .trim_end(),
             self.key,
-            self.get_fen(),
-            self.gs
+            self.get_fen()
         ).as_str())
     }
 }

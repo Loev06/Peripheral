@@ -1,7 +1,7 @@
 pub const NAME: &str = "Rust Chess Engine";
-pub const VERSION: &str = "0.1.7";
+pub const VERSION: &str = "0.1.8";
 pub const AUTHOR: &str = "Loev06";
-pub const DATE: &str = "2024-01-30";
+pub const DATE: &str = "2024-02-01";
 
 use std::error::Error;
 use serde::{Deserialize, Serialize};
