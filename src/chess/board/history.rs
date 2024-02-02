@@ -45,7 +45,7 @@ impl GSHistory {
 struct KeyHistoryEntry(u64);
 
 impl KeyHistoryEntry {
-    const COUNT_BITS: u8 = 6; // max 64 revertable moves
+    const COUNT_BITS: u8 = 7; // max 128 revertable moves (100 is the maximum due to 50 move rule)
     const COUNT_MASK: u64 = (1 << Self::COUNT_BITS) - 1;
     const KEY_MASK: u64 = !Self::COUNT_MASK;
 
@@ -56,7 +56,7 @@ impl KeyHistoryEntry {
 
     #[inline(always)]
     fn equal_key(&self, key: u64) -> bool {
-        self.0 == key & Self::KEY_MASK
+        (self.0 ^ key) & Self::KEY_MASK == 0
     }
 
     #[inline(always)]
@@ -69,39 +69,55 @@ pub struct KeyHistory(Vec<KeyHistoryEntry>);
 
 impl KeyHistory {
     pub fn new(start_pos_key: u64) -> Self {
-        Self(vec![KeyHistoryEntry::new(start_pos_key, 0)])
+        Self(vec![KeyHistoryEntry::new(start_pos_key, 1)])
     }
 
-    pub fn contains_key(&self, key: u64) -> bool {
+    pub fn contains_2fold(&self) -> bool {
+        let last = self.0.last().expect("History should not be empty");
+        let iters = last.get_count();
+        let key = last.0;
         self.0
             .iter()
             .rev()
-            .take(self.0.last().expect("History should not be empty").get_count())
-            .skip(1)
+            .take(iters)
+            .skip(4) // repetition is not possible within 4 plies
             .step_by(2)
             .any(|x| x.equal_key(key))
     }
 
-    pub fn contains_key_twice(&self, key: u64) -> bool {
+    pub fn contains_3fold(&self) -> bool {
+        let last = self.0.last().expect("History should not be empty");
+        let iters = last.get_count();
+        let key = last.0;
         self.0
             .iter()
             .rev()
-            .take(self.0.last().expect("History should not be empty").get_count())
-            .skip(1)
+            .take(iters)
+            .skip(4) // repetition is not possible within 4 plies
             .step_by(2)
             .filter(|x| x.equal_key(key))
-            .count() == 2
+            .count() >= 2
     }
 
     pub fn push_key(&mut self, key: u64, last_move_revertable: bool) {
         self.0.push(KeyHistoryEntry::new(key, if last_move_revertable {
             self.0.last().expect("History should not be empty").0 + 1 // add one to last entry's count
         } else {
-            0 // reset count
+            1 // reset count
         }))
     }
 
     pub fn pop(&mut self) {
         self.0.pop();
+    }
+
+    pub fn print_history(&self) {
+        for entry in &self.0 {
+            println!(
+                "Key: {:X}\tCount: {}",
+                entry.0 & KeyHistoryEntry::KEY_MASK,
+                entry.0 & KeyHistoryEntry::COUNT_MASK,
+            )
+        }
     }
 }

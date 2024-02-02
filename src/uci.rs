@@ -181,7 +181,7 @@ uciok",
                 "perft" => {
                     let board = Board::try_from_fen(self.engine.get_board().get_fen().as_str()).expect("Engine returned an incorrect fen");
                     let depth = args.next().expect("no depth given").parse::<u8>().expect("depth not a byte");
-                    Perft::new(board).verb_perft(depth, true, false);
+                    Perft::new(board).verb_perft(depth, false, false);
                     return;
                 },
                 "movetime" => search_params.move_time = Some(args.next().expect("no movetime given").parse::<u128>().expect("movetime not an integer")),

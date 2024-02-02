@@ -3,10 +3,9 @@ use std::error::Error;
 use crate::chess::PieceType;
 
 use super::{
-    Board, GameState,
     super::{
         Color::*, PieceType::*, precomputed, Square, util, CastlingFlags
-    }
+    }, history::KeyHistory, Board, GameState
 };
 
 struct FENdata<'a> {
@@ -33,7 +32,6 @@ impl<'a> FENdata<'a> {
 }
 
 impl Board {
-
     pub fn try_from_fen(fen: &str) -> Result<Self, Box<dyn Error>> {
         let fen_data = FENdata::try_parse(fen)?;
         let mut b = Self::empty();
@@ -93,6 +91,8 @@ impl Board {
     
         b.gs = gs;
         b.key = b.make_key();
+
+        b.key_history = KeyHistory::new(b.key);
 
         Ok(b)
     }

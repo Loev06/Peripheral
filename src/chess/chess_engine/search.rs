@@ -84,6 +84,21 @@ impl ChessEngine {
     }
 
     fn negamax(&mut self, mut alpha: Score, beta: Score, depth: u8, ply: u8) -> Score {
+        let tt_index = self.tt.calc_index(self.board.key);
+
+        if ply <= 2 {
+            if self.board.key_history.contains_3fold() {
+                // self.tt.record(tt_index, self.board.key, Move::empty(), depth, 0, NodeType::Exact);
+                // self.board.key_history.print_history();
+                return 0;
+            }
+        } else {
+            if self.board.key_history.contains_2fold() {
+                // self.tt.record(tt_index, self.board.key, Move::empty(), depth, 0, NodeType::Exact);
+                return 0;
+            }
+        }
+
         if depth == 0 {
             // Check for timeout on leaf node
             if self.nodes & 2047 == 0 && self.timer.elapsed().as_millis() >= self.search_time {
@@ -100,7 +115,6 @@ impl ChessEngine {
             return score;
         }
 
-        let tt_index = self.tt.calc_index(self.board.key);
         let mut best_move = match self.tt.probe(tt_index, alpha, beta, depth, self.board.key) {
             TTProbeResult::Score(score) => return score,
             TTProbeResult::BestMove(mv) => mv,
@@ -126,6 +140,8 @@ impl ChessEngine {
             if self.search_canceled {
                 return 0;
             }
+
+            // println!("{} {}", mv, score);
 
             if score >= beta {
                 self.tt.record(tt_index, self.board.key, mv, depth, score, NodeType::Cut);

@@ -1,8 +1,8 @@
 use super::{Move, Board, PieceType::{*, self}};
 
-pub type Grade = u16;
+pub type Grade = u8;
 
-const PV_GRADE: Grade = 10000;
+const PV_GRADE: Grade = 255;
 const EP_GRADE: Grade = mvv_lva(WPawn, WPawn);
 
 const fn mvv_lva(moving: PieceType, capturing: PieceType) -> Grade { // ranges from 2 (king captures pawn) to 39 (pawn captures queen)

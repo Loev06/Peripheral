@@ -98,7 +98,7 @@ pub struct Board {
     pub key: u64,
 
     gs_history: GSHistory,
-    key_history: KeyHistory
+    pub key_history: KeyHistory
 }
 
 impl Board {

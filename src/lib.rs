@@ -1,5 +1,5 @@
 pub const NAME: &str = "Rust Chess Engine";
-pub const VERSION: &str = "0.1.8";
+pub const VERSION: &str = "0.1.9";
 pub const AUTHOR: &str = "Loev06";
 pub const DATE: &str = "2024-02-01";
 
