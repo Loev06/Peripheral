@@ -51,6 +51,8 @@ impl Uci {
                     "run"        => self.run_bot(),
                     "make"       => self.make(&mut args),
                     "undo"       => self.undo(),
+                    "probe"      => self.probe(),
+                    "gen"        => self.gen(),
                     "quit"       => break,
                     other => println!("Unknown command: '{}'. Type 'help' for a list of commands.", other)
                 }
@@ -73,6 +75,8 @@ List of known commands:
 - run        Run main function of the bot
 - make       Make move
 - undo       Undo last move made
+- probe      Probe current position in the transposition table
+- gen        Get the TT generation of the last search
 - quit       Quit.", 
             Self::get_header()
         );
@@ -201,7 +205,7 @@ uciok",
     }
 
     fn eval(&self) {
-        let board = Board::try_from_fen(self.engine.get_board().to_string().as_str()).expect("Engine returned an incorrect fen");
+        let board = Board::try_from_fen(self.engine.get_board().get_fen().as_str()).expect("Engine returned an incorrect fen");
         println!("{}", Eval::eval(&board));
     }
 
@@ -225,5 +229,13 @@ uciok",
 
     fn undo(&mut self) {
         self.engine.undo_move().unwrap_or_else(|err| println!("{err}"));
+    }
+
+    fn probe(&self) {
+        println!("{}", self.engine.probe_tt());
+    }
+
+    fn gen(&self) {
+        println!("{}", self.engine.get_gen())
     }
 }

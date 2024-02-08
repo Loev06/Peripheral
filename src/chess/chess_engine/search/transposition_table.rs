@@ -1,4 +1,4 @@
-use std::mem::size_of;
+use std::{fmt::Display, mem::size_of};
 
 use super::super::super::{
     Move, Score, Board
@@ -15,6 +15,19 @@ pub enum NodeType {
     PV // contains best_move
 }
 
+impl Display for NodeType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(
+            match self {
+                Self::Exact => "exact",
+                Self::All   => "all",
+                Self::Cut   => "cut",
+                Self::PV    => "PV"
+            }
+        )
+    }
+}
+
 // GenBound contains (bit 1 being lsb):
 // bits 3-8: generation (u8)
 // bits 1-2: NodeType (enum)
@@ -22,6 +35,8 @@ pub enum NodeType {
 pub struct GenBound(u8);
 
 impl GenBound {
+    const GENERATION_STEPSIZE: u8 = 0b100;
+
     #[inline(always)]
     pub fn new(generation: u8, node_type: NodeType) -> Self {
         Self(generation
@@ -103,6 +118,20 @@ impl TTEntry {
     }
 }
 
+impl Display for TTEntry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "key:\t{:X}\nmove:\t{}\ndepth:\t{}\nscore:\t{}\ntype:\t{}\ngen:\t{}",
+            self.key,
+            self.best_move,
+            self.depth,
+            self.score,
+            self.gen_bound.node_type(),
+            self.gen_bound.generation() / GenBound::GENERATION_STEPSIZE
+        ))
+    }
+}
+
 pub enum TTProbeResult {
     Score(Score),
     BestMove(Move),
@@ -128,10 +157,15 @@ impl TranspositionTable {
             generation: 0
         }
     }
-
+    
     pub const fn tt_size_from_mb(mb: usize) -> usize {
         let preferred_size = mb * 1024 * 1024 / size_of::<TTEntry>();
         1 << preferred_size.ilog2() // round down
+    }
+
+    #[inline(always)]
+    pub fn entry_is_position(entry: TTEntry, key: u64) -> bool {
+        entry.key == key as TTKey
     }
 
     #[inline(always)]
@@ -140,7 +174,7 @@ impl TranspositionTable {
     }
 
     pub fn next_generation(&mut self) {
-        self.generation = self.generation.wrapping_add(4)
+        self.generation = self.generation.wrapping_add(GenBound::GENERATION_STEPSIZE)
     }
 
     pub fn get_pv(&mut self, board: &mut Board, depth: u8) -> Vec<Move> {
@@ -154,7 +188,7 @@ impl TranspositionTable {
             pv.push(best_move);
 
             // make sure the PV persist during the next generation
-            entry.gen_bound = GenBound::new(self.generation.wrapping_add(4), NodeType::PV);
+            entry.gen_bound = GenBound::new(self.generation.wrapping_add(GenBound::GENERATION_STEPSIZE), NodeType::PV);
             
             board.make_move(&best_move);
             pv.append(self.get_pv(board, depth - 1).as_mut());
@@ -183,14 +217,23 @@ impl TranspositionTable {
 
     #[inline(always)]
     pub fn get_entry(&self, index: usize, key: u64) -> Option<TTEntry> {
-        let entry = self.tt[index];
-        if entry.key == key as TTKey {
+        let entry = self.get_entry_at_index(index);
+        if Self::entry_is_position(entry, key) {
             Some(entry)
         } else {
             None
         }
     }
 
+    #[inline(always)]
+    pub fn get_entry_at_index(&self, index: usize) -> TTEntry {
+        self.tt[index]
+    }
+
+    pub fn get_gen(&self) -> u8 {
+        self.generation / GenBound::GENERATION_STEPSIZE
+    }
+    
     #[inline(always)]
     pub fn record(&mut self, index: usize, key: u64, best_move: Move, depth: u8, score: Score, node_type: NodeType) {
         self.tt[index].save(key as TTKey, best_move, depth, score, GenBound::new(self.generation, node_type));

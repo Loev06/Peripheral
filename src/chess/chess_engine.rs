@@ -81,4 +81,17 @@ impl ChessEngine {
         self.board.undo_move(&self.uci_moves.pop().ok_or("No move to undo")?);
         Ok(())
     }
+
+    pub fn probe_tt(&self) -> String {
+        let entry = self.tt.get_entry_at_index(self.tt.calc_index(self.board.key));
+        if TranspositionTable::entry_is_position(entry, self.board.key) {
+            format!("TT includes current position:\n{}", entry)
+        } else {
+            format!("TT does NOT include current position!\nStored position at index is:\n{}", entry)
+        }
+    }
+
+    pub fn get_gen(&self) -> u8 {
+        self.tt.get_gen()
+    }
 }

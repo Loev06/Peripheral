@@ -44,6 +44,8 @@ In the root directory, run
 - `run`         Run main function of the bot (multipurpose debug command, runs run_bot() located in lib.rs)
 - `make [move]` Make move (*e.g. `e2e4`*)
 - `undo`        Undo last move made
+- `probe`       Probe current position in the transposition table
+- `gen`         Get the TT generation of the last search
 - `quit`        Quit
 
 ## Benchmarks
