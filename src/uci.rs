@@ -53,6 +53,7 @@ impl Uci {
                     "undo"       => self.undo(),
                     "probe"      => self.probe(),
                     "gen"        => self.gen(),
+                    "hist"       => self.hist(),
                     "quit"       => break,
                     other => println!("Unknown command: '{}'. Type 'help' for a list of commands.", other)
                 }
@@ -77,6 +78,7 @@ List of known commands:
 - undo       Undo last move made
 - probe      Probe current position in the transposition table
 - gen        Get the TT generation of the last search
+- hist       Print the history of stored keys for threefold detection
 - quit       Quit.", 
             Self::get_header()
         );
@@ -237,5 +239,9 @@ uciok",
 
     fn gen(&self) {
         println!("{}", self.engine.get_gen())
+    }
+
+    fn hist(&self) {
+        self.engine.print_history();
     }
 }

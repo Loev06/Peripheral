@@ -46,6 +46,7 @@ In the root directory, run
 - `undo`        Undo last move made
 - `probe`       Probe current position in the transposition table
 - `gen`         Get the TT generation of the last search
+- `hist`        Print the history of stored keys for threefold detection
 - `quit`        Quit
 
 ## Benchmarks

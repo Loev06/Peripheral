@@ -94,4 +94,8 @@ impl ChessEngine {
     pub fn get_gen(&self) -> u8 {
         self.tt.get_gen()
     }
+    
+    pub fn print_history(&self) {
+        self.board.key_history.print_history();
+    }
 }
