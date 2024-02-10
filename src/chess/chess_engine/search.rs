@@ -86,7 +86,7 @@ impl ChessEngine {
     fn negamax(&mut self, mut alpha: Score, beta: Score, depth: u8, ply: u8) -> Score {
         let tt_index = self.tt.calc_index(self.board.key);
 
-        if ply <= 2 {
+        if ply <= 1 {
             if self.board.key_history.contains_3fold() {
                 // self.tt.record(tt_index, self.board.key, Move::empty(), depth, 0, NodeType::Exact);
                 // self.board.key_history.print_history();
@@ -132,7 +132,7 @@ impl ChessEngine {
 
         let mut best_score = MIN_SCORE;
 
-        for mv in moves.sort_with_function(grade, best_move, &self.board) {
+        for mv in moves.sort_with_grading_function(grade, best_move, &self.board) {
             self.board.make_move(&mv);
             let score = -self.negamax(-beta, -alpha, depth - 1, ply + 1);
             self.board.undo_move(&mv);
@@ -179,7 +179,7 @@ impl ChessEngine {
             }
         }
 
-        for mv in moves.sort_with_function(grade, Move::empty(), &self.board) {
+        for mv in moves.sort_with_grading_function(grade, Move::empty(), &self.board) {
             self.board.make_move(&mv);
             let score = -self.quiescence(-beta, -alpha);
             self.board.undo_move(&mv);

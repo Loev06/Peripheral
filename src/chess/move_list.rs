@@ -63,7 +63,7 @@ impl MoveList {
         }
     }
 
-    pub fn sort_with_function<F>(mut self, grading_function: F, pv_move: Move, board: &Board) -> SortingMoveList
+    pub fn sort_with_grading_function<F>(mut self, grading_function: F, pv_move: Move, board: &Board) -> SortingMoveList
     where 
         F: Fn(Move, Move, &Board) -> Grade
     {

@@ -107,7 +107,7 @@ impl TTEntry {
         }
 
         // inspired by https://github.com/official-stockfish/Stockfish/blob/8b4583bce76da7d27aaa565e6302d2e540cd496a/src/tt.cpp#L38
-        if !best_move.is_empty() || self.key != key {
+        if self.key != key || !best_move.is_empty() {
             self.best_move = best_move;
         }
         
@@ -204,7 +204,8 @@ impl TranspositionTable {
         if entry.key == key as TTKey {
             if entry.depth >= depth {
                 match entry.gen_bound.node_type() {
-                    NodeType::Exact | NodeType::PV => return TTProbeResult::Score(entry.score),
+                    NodeType::PV => return TTProbeResult::BestMove(entry.best_move), // no TT-cutoff on PV nodes
+                    NodeType::Exact => return TTProbeResult::Score(entry.score),
                     NodeType::All => if entry.score <= alpha {return TTProbeResult::Score(entry.score);},
                     NodeType::Cut => if entry.score >= beta {return TTProbeResult::Score(entry.score);}
                 }

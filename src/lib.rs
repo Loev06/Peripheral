@@ -1,7 +1,7 @@
 pub const NAME: &str = "Rust Chess Engine";
-pub const VERSION: &str = "0.1.9";
+pub const VERSION: &str = "0.1.10";
 pub const AUTHOR: &str = "Loev06";
-pub const DATE: &str = "2024-02-08";
+pub const DATE: &str = "2024-02-11";
 
 use std::error::Error;
 use serde::{Deserialize, Serialize};
@@ -20,7 +20,7 @@ pub fn run_bot() -> Result<(), Box<dyn Error>> {
     let mut board = Board::try_from_fen(FEN)?;
     let mut moves = MoveList::new();
     mg.generate_legal_moves(&mut board, &mut moves, true);
-    for mv in moves.sort_with_function(grade, Move::new(19, 27, &Move::empty()), &board) {
+    for mv in moves.sort_with_grading_function(grade, Move::new(19, 27, &Move::empty()), &board) {
         println!("{} | {}", mv, grade(mv, Move::new(19, 27, &Move::empty()), &board));
     }
     
