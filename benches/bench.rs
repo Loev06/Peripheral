@@ -2,7 +2,7 @@
 cargo bench --bench bench
 */
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use chess_engine::{self, MoveGenerator, Board, MoveList, Perft, ChessEngine, SearchParams};
+use peripheral::{self, MoveGenerator, Board, MoveList, Perft, ChessEngine, SearchParams};
 
 const TABLE_SIZE: usize = 8;
 

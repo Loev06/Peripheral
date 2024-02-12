@@ -1,4 +1,4 @@
-use chess_engine::{ChessEngine, Board, Perft, Eval, SearchParams};
+use peripheral::{ChessEngine, Board, Perft, Eval, SearchParams};
 use std::{io, str::SplitAsciiWhitespace};
 
 const START_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -23,7 +23,7 @@ impl Uci {
     }
 
     pub fn get_header() -> String {
-        format!("{} v{} - {} ({})", chess_engine::NAME, chess_engine::VERSION, chess_engine::AUTHOR, chess_engine::DATE)
+        format!("{} {} - {} ({})", peripheral::NAME, peripheral::VERSION, peripheral::AUTHOR, peripheral::DATE)
     }
 
     pub fn run(&mut self) {
@@ -90,8 +90,8 @@ id author {}
 
 option name Hash type spin default {} min {} max {}
 uciok",
-            chess_engine::NAME, chess_engine::VERSION,
-            chess_engine::AUTHOR,
+            peripheral::NAME, peripheral::VERSION,
+            peripheral::AUTHOR,
 
             DEFAULT_TABLE_SIZE, MIN_TABLE_SIZE, MAX_TABLE_SIZE
         );
@@ -212,7 +212,7 @@ uciok",
     }
 
     fn run_bot(&self) {
-        chess_engine::run_bot().unwrap_or_else(|e| println!("Bot returned an error: {}", e));
+        peripheral::run_bot().unwrap_or_else(|e| println!("Bot returned an error: {}", e));
     }
 
     fn make(&mut self, args: &mut SplitAsciiWhitespace) {

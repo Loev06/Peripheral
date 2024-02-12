@@ -1,4 +1,4 @@
-# Rust-Chess-Engine
+# Peripheral
 
 A chess engine in development. I'm learning Rust and engine dev as I go, so any feedback is appreciated.
 
@@ -8,9 +8,12 @@ A chess engine in development. I'm learning Rust and engine dev as I go, so any 
 *(Currently running on a 2GHz `Odroid N2+`)*
 
 ## Rating estimations
-`~1836` CCRL blitz, based on a small gauntlet against three engines in the CCRL pool
+Rating estimate of version `1.0.0`:
+`~1960` CCRL blitz, based on SPRT against a previous version and some other engines.
 
-`~1950` Lichess (all time controls). Probably not representative outside of Lichess, since the bot plays on relatively weak hardware, sometimes against human players, etc. etc.
+`~1990` Lichess (all time controls). Probably not representative outside of Lichess, since the bot plays on relatively weak hardware, potentially against cherry-picking bots, etc. etc.
+
+SPRT results and ELO calculations can be found [here](https://github.com/Loev06/Rust-Chess-Engine/blob/main/CCRL%20Rating%20Estimate.txt).
 
 ## Search features:
 
