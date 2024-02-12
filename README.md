@@ -9,6 +9,7 @@ A chess engine in development. I'm learning Rust and engine dev as I go, so any 
 
 ## Rating estimations
 Rating estimate of version `1.0.0`:
+
 `~1960` CCRL blitz, based on SPRT against a previous version and some other engines.
 
 `~1990` Lichess (all time controls). Probably not representative outside of Lichess, since the bot plays on relatively weak hardware, potentially against cherry-picking bots, etc. etc.
