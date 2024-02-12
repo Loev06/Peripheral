@@ -15,9 +15,9 @@ impl ChessEngine {
         self.timer = Instant::now();
         self.search_time = search_params.move_time.unwrap_or(
             match self.board.gs.player_to_move {
-                Color::White => search_params.wtime,
-                Color::Black => search_params.btime,
-            } / 20
+                Color::White => search_params.wtime / 20 + search_params.winc / 2,
+                Color::Black => search_params.btime / 20 + search_params.binc / 2,
+            }
         );
 
         let mut pv = Vec::new();
@@ -110,6 +110,7 @@ impl ChessEngine {
 
             let score = self.quiescence(alpha, beta);
             
+            // TODO: SPRT uncommented when branching factor is lower
             // self.tt.record(tt_index, self.board.key, Move::empty(), depth, score, NodeType::Exact);
 
             return score;
