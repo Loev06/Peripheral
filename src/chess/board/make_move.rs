@@ -2,11 +2,12 @@ use super::{
     Board,
     history::GSHistoryEntry, 
     super::{
-        Move, PieceType, PieceType::*, util, precomputed, zobrist::*
+        Move, PieceType, Bitboard, PieceType::*, util, precomputed, zobrist::*
     }
 };
 
 impl Board {
+    #[inline(always)]
     pub fn make_move(&mut self, mv: &Move) {
         let from = mv.get_from();
         let to = mv.get_to();
@@ -70,5 +71,15 @@ impl Board {
         self.switch_sides();
         self.update_board_data();
         self.key_history.push_key(self.key, revertable)
+    }
+
+    #[inline(always)]
+    pub fn make_null_move(&mut self) -> Bitboard {
+        self.switch_sides();
+        self.gs.playing_king_square = util::ls1b_from_bitboard(self.bbs[WKing + self.gs.pt_offset]);
+        
+        let ep_mask = self.gs.en_passant_mask;
+        self.gs.en_passant_mask = precomputed::EMPTY;
+        ep_mask
     }
 }

@@ -30,7 +30,7 @@ impl ChessEngine {
             self.nodes = 0;
             self.search_canceled = false;
 
-            self.negamax(MIN_SCORE, MAX_SCORE, current_depth, 0);
+            self.negamax(MIN_SCORE, MAX_SCORE, current_depth as i8, 0, true);
 
             last_search = self.tt.get_entry(tt_index, self.board.key).expect("TT should include root");
 
@@ -84,7 +84,7 @@ impl ChessEngine {
         );
     }
 
-    fn negamax(&mut self, mut alpha: Score, beta: Score, depth: u8, ply: u8) -> Score {
+    fn negamax(&mut self, mut alpha: Score, beta: Score, mut depth: i8, ply: u8, null_allowed: bool) -> Score {
         let tt_index = self.tt.calc_index(self.board.key);
 
         if ply <= 1 {
@@ -100,7 +100,7 @@ impl ChessEngine {
             }
         }
 
-        if depth == 0 {
+        if depth <= 0 {
             // Check for timeout on leaf node
             if self.nodes & 2047 == 0 && self.timer.elapsed().as_millis() >= self.search_time {
                 self.search_canceled = true;
@@ -117,16 +117,32 @@ impl ChessEngine {
             return score;
         }
 
-        let mut best_move = match self.tt.probe(tt_index, alpha, beta, depth, self.board.key) {
+        let mut best_move = match self.tt.probe(tt_index, alpha, beta, depth as u8, self.board.key) {
             TTProbeResult::Score(score) => return score,
             TTProbeResult::BestMove(mv) => mv,
             TTProbeResult::None => Move::empty()
         };
 
-        let mut node_type = NodeType::All;
-
         let mut moves = MoveList::new();
         self.mg.generate_legal_moves(&mut self.board, &mut moves, false);
+
+        if null_allowed && !self.board.gs.is_in_check {
+            let r = if depth > 6 {4} else {3};
+
+            let ep_mask = self.board.make_null_move();
+            let score = -self.zero_window_search(1 - beta, depth - r - 1, ply);
+            self.board.undo_null_move(ep_mask);
+
+            if score >= beta {
+                depth -= 4;
+                if depth <= 0 {
+                    return self.quiescence(alpha, beta);
+                }
+            }
+        }
+
+        let mut node_type = NodeType::All;
+
 
         if *moves.get_count() == 0 {
             return if self.board.gs.is_in_check {-CHECKMATE_SCORE + ply as Score + 1} else {0};
@@ -136,7 +152,7 @@ impl ChessEngine {
 
         for mv in moves.sort_with_grading_function(grade, best_move, &self.board) {
             self.board.make_move(&mv);
-            let score = -self.negamax(-beta, -alpha, depth - 1, ply + 1);
+            let score = -self.negamax(-beta, -alpha, depth - 1, ply + 1, null_allowed);
             self.board.undo_move(&mv);
 
             if self.search_canceled {
@@ -146,7 +162,7 @@ impl ChessEngine {
             // println!("{} {}", mv, score);
 
             if score >= beta {
-                self.tt.record(tt_index, self.board.key, mv, depth, score, NodeType::Cut);
+                self.tt.record(tt_index, self.board.key, mv, depth as u8, score, NodeType::Cut);
                 return score; // fail-soft beta-cutoff - lower bound
             }
 
@@ -160,8 +176,14 @@ impl ChessEngine {
             }
         }
 
-        self.tt.record(tt_index, self.board.key, best_move, depth, best_score, node_type);
+        self.tt.record(tt_index, self.board.key, best_move, depth as u8, best_score, node_type);
         best_score
+    }
+
+    fn zero_window_search(&mut self, beta: Score, depth: i8, ply: u8) -> Score {
+        // alpha = beta - 1
+        // This is either a cut- or all-node
+        return self.negamax(beta - 1, beta, depth, ply, false);
     }
 
     fn quiescence(&mut self, mut alpha: Score, beta: Score) -> Score {
