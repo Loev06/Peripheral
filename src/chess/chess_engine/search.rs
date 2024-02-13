@@ -69,7 +69,7 @@ impl ChessEngine {
         };
 
         println!(
-            "info depth {} score {} nodes {} nps {} time {} pv{}",
+            "info depth {} score {} nodes {} nps {} hashfull {} time {} pv{}",
             depth,
             if let Some(mate) = mate_score {
                 format!("mate {}", mate)
@@ -78,6 +78,7 @@ impl ChessEngine {
             },
             self.nodes,
             if elapsed == 0 { 0 } else { self.nodes as u128 * 1000 / elapsed },
+            self.tt.hash_full(),
             elapsed,
             pv.iter().fold(String::new(), |acc, x| {format!("{acc} {x}")})
         );
@@ -128,7 +129,7 @@ impl ChessEngine {
         self.mg.generate_legal_moves(&mut self.board, &mut moves, false);
 
         if *moves.get_count() == 0 {
-            return if self.board.gs.is_in_check {-CHECKMATE_SCORE + ply as Score} else {0};
+            return if self.board.gs.is_in_check {-CHECKMATE_SCORE + ply as Score + 1} else {0};
         }
 
         let mut best_score = MIN_SCORE;

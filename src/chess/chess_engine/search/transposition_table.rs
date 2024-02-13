@@ -239,4 +239,11 @@ impl TranspositionTable {
     pub fn record(&mut self, index: usize, key: u64, best_move: Move, depth: u8, score: Score, node_type: NodeType) {
         self.tt[index].save(key as TTKey, best_move, depth, score, GenBound::new(self.generation, node_type));
     }
+
+    pub fn hash_full(&self) -> usize {
+        self.tt.iter()
+            .take(1000)
+            .filter(|x| x.gen_bound.generation() == self.generation)
+            .count()
+    }
 }

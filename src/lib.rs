@@ -1,7 +1,7 @@
 pub const NAME: &str = "Peripheral";
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const AUTHOR: &str = "Loev06";
-pub const DATE: &str = "2024-02-12";
+pub const DATE: &str = "2024-02-13";
 
 use std::error::Error;
 use serde::{Deserialize, Serialize};
