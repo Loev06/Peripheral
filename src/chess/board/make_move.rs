@@ -80,6 +80,7 @@ impl Board {
         
         let ep_mask = self.gs.en_passant_mask;
         self.gs.en_passant_mask = precomputed::EMPTY;
+        self.key ^= ZOBRIST_EP_SQUARE[util::ls1b_from_bitboard(ep_mask) as usize];
         ep_mask
     }
 }

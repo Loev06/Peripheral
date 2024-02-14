@@ -53,7 +53,8 @@ impl Board {
     pub fn undo_null_move(&mut self, ep_mask: Bitboard) {
         self.switch_sides();
         self.gs.playing_king_square = util::ls1b_from_bitboard(self.bbs[WKing + self.gs.pt_offset]);
-        
+
+        self.key ^= ZOBRIST_EP_SQUARE[util::ls1b_from_bitboard(ep_mask) as usize];
         self.gs.en_passant_mask = ep_mask;
     }
 }

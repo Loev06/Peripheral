@@ -35,6 +35,7 @@ pub struct ChessEngine {
 
     timer: Instant,
     nodes: u64,
+    seldepth: u8,
     search_time: u128,
     search_canceled: bool,
 
@@ -50,6 +51,7 @@ impl ChessEngine {
 
             timer: Instant::now(),
             nodes: 0,
+            seldepth: 0,
             search_time: 0,
             search_canceled: false,
             

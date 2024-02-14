@@ -28,6 +28,7 @@ impl ChessEngine {
         for current_depth in 1..=std::cmp::min(search_params.depth, MAX_DEPTH as u8) {
             self.tt.next_generation();
             self.nodes = 0;
+            self.seldepth = 0;
             self.search_canceled = false;
 
             self.negamax(MIN_SCORE, MAX_SCORE, current_depth as i8, 0, true);
@@ -69,8 +70,9 @@ impl ChessEngine {
         };
 
         println!(
-            "info depth {} score {} nodes {} nps {} hashfull {} time {} pv{}",
+            "info depth {} seldepth {} score {} nodes {} nps {} hashfull {} time {} pv{}",
             depth,
+            self.seldepth,
             if let Some(mate) = mate_score {
                 format!("mate {}", mate)
             } else {
@@ -107,7 +109,7 @@ impl ChessEngine {
                 return 0;
             }
 
-            let score = self.quiescence(alpha, beta);
+            let score = self.quiescence(alpha, beta, ply);
             
             // TODO: SPRT uncommented when branching factor is lower
             // self.tt.record(tt_index, self.board.key, Move::empty(), depth, score, NodeType::Exact);
@@ -134,7 +136,7 @@ impl ChessEngine {
             if score >= beta {
                 depth -= r;
                 if depth <= 0 {
-                    return self.quiescence(alpha, beta);
+                    return self.quiescence(alpha, beta, ply);
                 }
             }
         }
@@ -185,7 +187,11 @@ impl ChessEngine {
         return self.negamax(beta - 1, beta, depth, ply, false);
     }
 
-    fn quiescence(&mut self, mut alpha: Score, beta: Score) -> Score {
+    fn quiescence(&mut self, mut alpha: Score, beta: Score, ply: u8) -> Score {
+        if ply > self.seldepth {
+            self.seldepth = ply;
+        }
+
         let mut best_score = Eval::eval(&self.board) * self.board.gs.player_to_move as Score;
 
         let mut moves = MoveList::new();
@@ -205,7 +211,7 @@ impl ChessEngine {
         for mv in moves.sort_with_grading_function(grade, Move::empty(), &self.board) {
             self.board.make_move(&mv);
             self.nodes += 1;
-            let score = -self.quiescence(-beta, -alpha);
+            let score = -self.quiescence(-beta, -alpha, ply + 1);
             self.board.undo_move(&mv);
 
             if score >= beta {
