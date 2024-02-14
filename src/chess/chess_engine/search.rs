@@ -107,8 +107,6 @@ impl ChessEngine {
                 return 0;
             }
 
-            self.nodes += 1;
-
             let score = self.quiescence(alpha, beta);
             
             // TODO: SPRT uncommented when branching factor is lower
@@ -134,7 +132,7 @@ impl ChessEngine {
             self.board.undo_null_move(ep_mask);
 
             if score >= beta {
-                depth -= 4;
+                depth -= r;
                 if depth <= 0 {
                     return self.quiescence(alpha, beta);
                 }
@@ -152,6 +150,7 @@ impl ChessEngine {
 
         for mv in moves.sort_with_grading_function(grade, best_move, &self.board) {
             self.board.make_move(&mv);
+            self.nodes += 1;
             let score = -self.negamax(-beta, -alpha, depth - 1, ply + 1, null_allowed);
             self.board.undo_move(&mv);
 
@@ -205,6 +204,7 @@ impl ChessEngine {
 
         for mv in moves.sort_with_grading_function(grade, Move::empty(), &self.board) {
             self.board.make_move(&mv);
+            self.nodes += 1;
             let score = -self.quiescence(-beta, -alpha);
             self.board.undo_move(&mv);
 
