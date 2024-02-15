@@ -130,7 +130,7 @@ impl ChessEngine {
             let r = if depth > 6 {4} else {3};
 
             let ep_mask = self.board.make_null_move();
-            let score = -self.zero_window_search(1 - beta, depth - r - 1, ply);
+            let score = -self.zero_window_search(1 - beta, depth - r - 1, ply + 1);
             self.board.undo_null_move(ep_mask);
 
             if score >= beta {
