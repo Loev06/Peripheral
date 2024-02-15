@@ -8,7 +8,7 @@ A chess engine in development. I'm learning Rust and engine dev as I go, so any 
 *(Currently running on a 2GHz `Odroid N2+`)*
 
 ## Rating estimations
-Rating estimate of version `1.1.2`:
+Rating estimate of version `1.1.3`:
 
 `~2055` CCRL blitz (`+95` against `1.0.0`)
 
