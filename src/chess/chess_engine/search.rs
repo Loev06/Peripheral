@@ -153,6 +153,7 @@ impl ChessEngine {
         for mv in moves.sort_with_grading_function(grade, best_move, &self.board) {
             self.board.make_move(&mv);
             self.nodes += 1;
+            // TODO: SPRT null_allowed=true when reached depth is greater
             let score = -self.negamax(-beta, -alpha, depth - 1, ply + 1, null_allowed);
             self.board.undo_move(&mv);
 

@@ -4,8 +4,8 @@ Deepov         1820
 shallowblue    1616
 
 ---
-Estimated rating of Peripheral 1.1.0, based on a SPRT against 1.0.0:
-2068 +/- 38.3
+Estimated rating of Peripheral 1.1.2, based on a SPRT against 1.0.0:
+2055 +/- 35.5
 
 Estimated rating of Peripheral 1.0.0, based on a SPRT against gunborg1.35:
 1957 +/- 35.8
@@ -17,6 +17,13 @@ Version 1.0.0 rating gain since previous release (0.1.7), based on a SPRT:
 47.5 +/- 23.9
 
 ---
+
+Score of peripheral dev vs peripheral 1.0.0: 158 - 77 - 68  [0.634] 303
+...      peripheral dev playing White: 81 - 38 - 33  [0.641] 152
+...      peripheral dev playing Black: 77 - 39 - 35  [0.626] 151
+...      White vs Black: 120 - 115 - 68  [0.508] 303
+Elo difference: 95.2 +/- 35.5, LOS: 100.0 %, DrawRatio: 22.4 %
+SPRT: llr 2.92 (100.9%), lbound -2.25, ubound 2.89 - H1 was accepted
 
 Score of peripheral 1.1.0 vs peripheral 1.0.0: 138 - 60 - 61  [0.651] 259
 ...      peripheral 1.1.0 playing White: 72 - 26 - 32  [0.677] 130
