@@ -8,11 +8,11 @@ A chess engine in development. I'm learning Rust and engine dev as I go, so any 
 *(Currently running on a 2GHz `Odroid N2+`)*
 
 ## Rating estimations
-Rating estimate of version `1.0.0`:
+Rating estimate of version `1.1.3`:
 
-`~1960` CCRL blitz, based on SPRT against a previous version and some other engines.
+`~2055` CCRL blitz (`+95` against `1.0.0`)
 
-`~1990` Lichess (all time controls). Probably not representative outside of Lichess, since the bot plays on relatively weak hardware, potentially against cherry-picking bots, etc. etc.
+`~2069` Lichess (all time controls). Probably not representative outside of Lichess, since the bot plays on relatively weak hardware, potentially against cherry-picking bots, etc. etc.
 
 SPRT results and ELO calculations can be found [here](https://github.com/Loev06/Rust-Chess-Engine/blob/main/CCRL%20Rating%20Estimate.txt).
 
@@ -20,6 +20,7 @@ SPRT results and ELO calculations can be found [here](https://github.com/Loev06/
 
 - iterative deepening
 - alpha-beta negamax
+- extended null-move reductions
 - transposition table
     - current replacement scheme:
         1. previous PV always remains

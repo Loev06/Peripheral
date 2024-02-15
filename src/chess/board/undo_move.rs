@@ -1,7 +1,7 @@
 use super::{
     zobrist::*,
     super::{
-        Board, Move, PieceType, PieceType::*, precomputed, util
+        Board, Move, PieceType, Bitboard, PieceType::*, precomputed, util
     }
 };
 
@@ -47,5 +47,14 @@ impl Board {
         self.key ^= ZOBRIST_CASTLING[self.gs.castling_rights.bits() as usize];
         self.key ^= ZOBRIST_EP_SQUARE[util::ls1b_from_bitboard(self.gs.en_passant_mask) as usize];
         self.update_board_data();
+    }
+
+    #[inline(always)]
+    pub fn undo_null_move(&mut self, ep_mask: Bitboard) {
+        self.switch_sides();
+        self.gs.playing_king_square = util::ls1b_from_bitboard(self.bbs[WKing + self.gs.pt_offset]);
+
+        self.key ^= ZOBRIST_EP_SQUARE[util::ls1b_from_bitboard(ep_mask) as usize];
+        self.gs.en_passant_mask = ep_mask;
     }
 }
