@@ -61,6 +61,8 @@ Some [Criterion](https://crates.io/crates/criterion) benchmarks used for develop
 
 One statistic which I'm proud of:
 > `perft(6)`takes on average`430 ms`, which is`~276 MNPS!`(bulk counting, no hashing)
+> 
+> (No-bulk: `2372 ms`, `50 MNPS`)
 
 ## Perft test suite
 
