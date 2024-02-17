@@ -20,28 +20,40 @@ impl ChessEngine {
             }
         );
 
-        let mut pv = Vec::new();
+        let mut alpha = MIN_SCORE;
+        let mut beta = MAX_SCORE;
+        let mut depth: u8 = 1;
+        let mut pv ;
 
         let tt_index = self.tt.calc_index(self.board.key);
-        let mut last_search = TTEntry::empty();
+        let mut last_search;
 
-        for current_depth in 1..=std::cmp::min(search_params.depth, MAX_DEPTH as u8) {
+        loop {
             self.tt.next_generation();
             self.nodes = 0;
-            self.seldepth = 0;
             self.search_canceled = false;
 
-            self.negamax(MIN_SCORE, MAX_SCORE, current_depth as i8, 0, true);
+            let eval = self.negamax(alpha, beta, depth as i8, 0, true);
+            if eval <= alpha {
+                alpha -= 100;
+            } else if eval >= beta {
+                beta += 100;
+            } else {
+                alpha = eval - 30;
+                beta = eval + 30;
+                depth += 1;
+            }
 
             last_search = self.tt.get_entry(tt_index, self.board.key).expect("TT should include root");
 
-            pv = self.tt.get_pv(&mut self.board, current_depth);
+            pv = self.tt.get_pv(&mut self.board, depth);
 
             if verbose {
-                self.print_search_info(last_search, current_depth, &pv);
+                self.print_search_info(last_search, depth, &pv);
             }
 
-            if self.timer.elapsed().as_millis() >= self.search_time {
+            if depth > std::cmp::min(search_params.depth, MAX_DEPTH as u8)
+                || self.timer.elapsed().as_millis() >= self.search_time {
                 break;
             }
         }
