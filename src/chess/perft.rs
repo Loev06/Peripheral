@@ -1,7 +1,7 @@
 use super::{MoveGenerator, Board, MoveList};
 use std::time;
 
-const PERFT_TT_SIZE: usize = (1 << 16) << 8;
+const PERFT_TT_SIZE: usize = 1024 * 1024 / 16 * 16;
 const PERFT_TT_MASK: u64 = (PERFT_TT_SIZE - 1) as u64;
 
 #[derive(Clone, Copy)]

@@ -12,6 +12,7 @@ use transposition_table::{TTProbeResult, TTEntry, NodeType};
 
 impl ChessEngine {
     pub fn search(&mut self, search_params: SearchParams, verbose: bool) -> (Move, Score) {
+        self.nodes = 0;
         self.timer = Instant::now();
         self.search_time = search_params.move_time.unwrap_or(
             match self.board.gs.player_to_move {
@@ -22,39 +23,43 @@ impl ChessEngine {
 
         let mut alpha = MIN_SCORE;
         let mut beta = MAX_SCORE;
-        let mut depth: u8 = 1;
-        let mut pv ;
+        let mut pv = Vec::new() ;
 
         let tt_index = self.tt.calc_index(self.board.key);
-        let mut last_search;
+        let mut last_search = TTEntry::empty();
 
-        loop {
-            self.tt.next_generation();
-            self.nodes = 0;
-            self.search_canceled = false;
+        'depth: for depth in 1..= std::cmp::min(search_params.depth, MAX_DEPTH as u8) {
+            'window: loop {
+                self.tt.next_generation();
+                self.search_canceled = false;
+    
+                let eval = self.negamax(alpha, beta, depth as i8, 0, true);
+                
+                if self.search_canceled {
+                    break 'depth;
+                }
 
-            let eval = self.negamax(alpha, beta, depth as i8, 0, true);
-            if eval <= alpha {
-                alpha -= 100;
-            } else if eval >= beta {
-                beta += 100;
-            } else {
-                alpha = eval - 30;
-                beta = eval + 30;
-                depth += 1;
+                if eval <= alpha {
+                    alpha -= 100;
+                } else if eval >= beta {
+                    beta += 100;
+                } else {
+                    alpha = eval - 30;
+                    beta = eval + 30;
+                    break 'window;
+                }
             }
 
             last_search = self.tt.get_entry(tt_index, self.board.key).expect("TT should include root");
+            // if eval != last_search.score {
+            //     println!("eval: {} TT score: {}", eval, last_search.score);
+            // }
 
             pv = self.tt.get_pv(&mut self.board, depth);
 
             if verbose {
+                // println!("alpha={} beta={}", alpha, beta);
                 self.print_search_info(last_search, depth, &pv);
-            }
-
-            if depth > std::cmp::min(search_params.depth, MAX_DEPTH as u8)
-                || self.timer.elapsed().as_millis() >= self.search_time {
-                break;
             }
         }
 
@@ -148,6 +153,9 @@ impl ChessEngine {
             if score >= beta {
                 depth -= r;
                 if depth <= 0 {
+                    if ply == 0 {
+                        // println!("null_cut")
+                    }
                     return self.quiescence(alpha, beta, ply);
                 }
             }
@@ -177,6 +185,9 @@ impl ChessEngine {
 
             if score >= beta {
                 self.tt.record(tt_index, self.board.key, mv, depth as u8, score, NodeType::Cut);
+                if ply == 0 {
+                    // println!("beta_cut")
+                }
                 return score; // fail-soft beta-cutoff - lower bound
             }
 
@@ -190,6 +201,9 @@ impl ChessEngine {
             }
         }
 
+        if ply == 0 {
+            // println!("searched all moves")
+        }
         self.tt.record(tt_index, self.board.key, best_move, depth as u8, best_score, node_type);
         best_score
     }
