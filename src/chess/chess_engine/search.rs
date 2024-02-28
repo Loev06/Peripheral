@@ -29,25 +29,28 @@ impl ChessEngine {
         let mut last_search = TTEntry::empty();
 
         'depth: for depth in 1..= std::cmp::min(search_params.depth, MAX_DEPTH as u8) {
+            let mut window_step = 100;
             'window: loop {
                 self.tt.next_generation();
                 self.search_canceled = false;
-    
+
                 let eval = self.negamax(alpha, beta, depth as i8, 0, true);
-                
+
                 if self.search_canceled {
                     break 'depth;
                 }
 
                 if eval <= alpha {
-                    alpha -= 100;
+                    alpha = alpha.checked_sub(window_step).unwrap_or(MIN_SCORE);
                 } else if eval >= beta {
-                    beta += 100;
+                    beta = beta.checked_add(window_step).unwrap_or(MAX_SCORE);
                 } else {
                     alpha = eval - 30;
                     beta = eval + 30;
                     break 'window;
                 }
+
+                window_step *= 1;
             }
 
             last_search = self.tt.get_entry(tt_index, self.board.key).expect("TT should include root");
@@ -134,7 +137,7 @@ impl ChessEngine {
             return score;
         }
 
-        let mut best_move = match self.tt.probe(tt_index, alpha, beta, depth as u8, self.board.key) {
+        let mut best_move = match self.tt.probe(tt_index, alpha, beta, depth as u8, self.board.key, &self.board, &self.mg) {
             TTProbeResult::Score(score) => return score,
             TTProbeResult::BestMove(mv) => mv,
             TTProbeResult::None => Move::empty()
@@ -162,7 +165,6 @@ impl ChessEngine {
         }
 
         let mut node_type = NodeType::All;
-
 
         if *moves.get_count() == 0 {
             return if self.board.gs.is_in_check {-CHECKMATE_SCORE + ply as Score + 1} else {0};

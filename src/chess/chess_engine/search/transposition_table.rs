@@ -1,7 +1,7 @@
 use std::{fmt::Display, mem::size_of};
 
 use super::super::super::{
-    Move, Score, Board
+    Move, Score, Board, MoveGenerator
 };
 
 // Key as stored in a TTEntry. u16 should be enough for no collisions to be occuring (1 in (2^16 * TT_SIZE) for each node)
@@ -199,18 +199,22 @@ impl TranspositionTable {
     }
 
     #[inline(always)]
-    pub fn probe(&self, index: usize, alpha: Score, beta: Score, depth: u8, key: u64) -> TTProbeResult {
+    pub fn probe(&self, index: usize, alpha: Score, beta: Score, depth: u8, key: u64, b: &Board, mg: &MoveGenerator) -> TTProbeResult {
         let entry = self.tt[index];
         if entry.key == key as TTKey {
             if entry.depth >= depth {
                 match entry.gen_bound.node_type() {
-                    NodeType::PV => return TTProbeResult::BestMove(entry.best_move), // no TT-cutoff on PV nodes
-                    NodeType::Exact => return TTProbeResult::Score(entry.score),
+                    NodeType::PV => return TTProbeResult::BestMove(entry.best_move), // no TT-cutoff on PV nodes, no legality check: move gets discarded during sort
+                    NodeType::Exact => return if mg.is_pseudo_legal_move(b, entry.best_move) {
+                            TTProbeResult::Score(entry.score)
+                        } else {
+                            TTProbeResult::None
+                        },
                     NodeType::All => if entry.score <= alpha {return TTProbeResult::Score(entry.score);},
                     NodeType::Cut => if entry.score >= beta {return TTProbeResult::Score(entry.score);}
                 }
             } else {
-                return TTProbeResult::BestMove(entry.best_move)
+                return TTProbeResult::BestMove(entry.best_move) // no legality check: move gets discarded during sort
             }
         }
         TTProbeResult::None

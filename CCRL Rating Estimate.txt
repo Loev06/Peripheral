@@ -18,6 +18,13 @@ Version 1.0.0 rating gain since previous release (0.1.7), based on a SPRT:
 
 ---
 
+Score of peripheral 1.2.2 vs peripheral 1.1.3: 373 - 289 - 289  [0.544] 951
+...      peripheral 1.2.2 playing White: 200 - 136 - 140  [0.567] 476
+...      peripheral 1.2.2 playing Black: 173 - 153 - 149  [0.521] 475
+...      White vs Black: 353 - 309 - 289  [0.523] 951
+Elo difference: 30.8 +/- 18.5, LOS: 99.9 %, DrawRatio: 30.4 %
+SPRT: llr 2.92 (101.0%), lbound -2.25, ubound 2.89 - H1 was accepted
+
 Score of peripheral dev vs peripheral 1.0.0: 158 - 77 - 68  [0.634] 303
 ...      peripheral dev playing White: 81 - 38 - 33  [0.641] 152
 ...      peripheral dev playing Black: 77 - 39 - 35  [0.626] 151

@@ -1,7 +1,7 @@
 pub const NAME: &str = "Peripheral";
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const AUTHOR: &str = "Loev06";
-pub const DATE: &str = "2024-02-17";
+pub const DATE: &str = "2024-02-28";
 
 use std::error::Error;
 use serde::{Deserialize, Serialize};
@@ -15,14 +15,20 @@ const FEN: &str = "k3r3/8/8/3nQr2/4b3/3K4/8/8 w - - 0 1";
 
 pub fn run_bot() -> Result<(), Box<dyn Error>> {
     println!("Main bot function");
+    
 
     let mg = MoveGenerator::new();
     let mut board = Board::try_from_fen(FEN)?;
     let mut moves = MoveList::new();
     mg.generate_legal_moves(&mut board, &mut moves, true);
-    for mv in moves.sort_with_grading_function(grade, Move::new(19, 27, &Move::empty()), &board) {
-        println!("{} | {}", mv, grade(mv, Move::new(19, 27, &Move::empty()), &board));
+
+    for mv in moves {
+        println!("{} | {}", mv, mg.is_pseudo_legal_move(&board, mv))
     }
+
+    // for mv in moves.sort_with_grading_function(grade, Move::new(19, 27, &Move::empty()), &board) {
+    //     println!("{} | {}", mv, grade(mv, Move::new(19, 27, &Move::empty()), &board));
+    // }
     
     // let mut chess_engine = ChessEngine::new(FEN);
     // let res = chess_engine.search(6);

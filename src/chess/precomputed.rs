@@ -71,6 +71,11 @@ pub const F8BB: Bitboard = util::bitboard_from_square(F8);
 pub const G8BB: Bitboard = util::bitboard_from_square(G8);
 pub const H8BB: Bitboard = util::bitboard_from_square(H8);
 
+pub const WK_CASTLE_SQUARES: Bitboard = F1BB | G1BB;
+pub const WQ_CASTLE_SQUARES: Bitboard = B1BB | C1BB | D1BB;
+pub const BK_CASTLE_SQUARES: Bitboard = F8BB | G8BB;
+pub const BQ_CASTLE_SQUARES: Bitboard = B8BB | C8BB | D8BB;
+
 pub const SQUARE_NAMES: [&str; 64] = [
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
     "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",

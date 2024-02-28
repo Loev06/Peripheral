@@ -40,9 +40,12 @@ impl MoveGenerator {
         self.bishop_lookups = precompute_lookups(precomputed::BISHOP_DIRS, BISHOP_MAGICS);
     }
 
+    #[inline(always)]
     pub fn get_rook_attacks(&self, occ: Bitboard, sq: Square) -> Bitboard {
         self.rook_lookups[ROOK_MAGICS[sq as usize].calculate_index(occ)]
     }
+    
+    #[inline(always)]
     pub fn get_bishop_attacks(&self, occ: Bitboard, sq: Square) -> Bitboard {
         self.bishop_lookups[BISHOP_MAGICS[sq as usize].calculate_index(occ)]
     }

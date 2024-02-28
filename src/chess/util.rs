@@ -1,6 +1,6 @@
 use crate::chess::precomputed;
 
-use super::{Square, Bitboard};
+use super::{Bitboard, Color, Square};
 
 pub fn print_bb(bb: Bitboard) {
     println!(
@@ -16,6 +16,15 @@ pub fn print_bb(bb: Bitboard) {
     );
 }
 
+#[inline(always)]
+pub const fn shift_dir(bb: Bitboard, shift: u8, dir: Color) -> Bitboard {
+    match dir {
+        Color::White => bb << shift,
+        Color::Black => bb >> shift
+    }
+}
+
+#[inline(always)]
 pub const fn square_from_coord(x: usize, y: usize) -> Square {
     debug_assert!((x + (y << 3)) < 64);
     (x + (y << 3)) as Square
